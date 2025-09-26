@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exoplanet Hunter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a1a;
+            color: #e0e0e0;
+        }
+        .chart-container {
+            position: relative;
+            height: 60vh;
+            width: 100%;
+        }
+        .feedback-modal, .field-guide-modal {
+            background-color: rgba(10, 10, 26, 0.9);
+            backdrop-filter: blur(5px);
+        }
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #4b5563;
+            color: white;
+        }
+         .btn-secondary:hover {
+            background-color: #374151;
+        }
+        .task-panel {
+            background-color: #1f2937;
+        }
+        .tool-btn {
+            background-color: #374151;
+        }
+        .tool-btn:hover {
+            background-color: #4b5563;
+        }
+        .guide-item {
+            background-color: #374151;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .guide-item:hover {
+            background-color: #4b5563;
+            transform: scale(1.05);
+        }
+        .guide-content-section {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .guide-content-section h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #9ca3af;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #4b5563;
+            padding-bottom: 0.25rem;
+        }
+         .guide-content-section p {
+            margin-bottom: 1rem;
+        }
+        .guide-content-section img {
+            border-radius: 0.5rem;
+            background-color: #0a0a1a;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            padding-bottom: 8px;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            border-bottom-color: #3b82f6;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-7xl mx-auto bg-[#111827] rounded-2xl shadow-2xl p-6 md:p-8">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-white tracking-wider">Exoplanet Hunter</h1>
+            <p class="text-gray-400 mt-2">Analyze starlight to discover new worlds.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left Panel: Chart & Tools -->
+            <div class="lg:col-span-8 bg-gray-900 p-4 rounded-lg flex relative">
+                 <div class="chart-container flex-grow">
+                    <canvas id="lightCurveChart"></canvas>
+                </div>
+                 <div class="absolute top-4 right-4 h-full flex flex-col items-center justify-start space-y-4 p-2 bg-black bg-opacity-20 rounded-lg">
+                    <h3 class="text-lg font-semibold text-white mb-2">Tools</h3>
+                    <button id="zoomInBtn" class="w-12 h-12 tool-btn rounded-full flex items-center justify-center" title="Zoom In">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3h-6"></path></svg>
+                    </button>
+                    <button id="zoomOutBtn" class="w-12 h-12 tool-btn rounded-full flex items-center justify-center" title="Zoom Out">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path></svg>
+                    </button>
+                    <button id="resetZoomBtn" class="w-12 h-12 tool-btn rounded-full flex items-center justify-center" title="Reset Zoom">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 20h5v-5M20 4h-5v5"></path></svg>
+                    </button>
+                     <div class="flex-grow"></div>
+                    <button id="fieldGuideBtn" class="w-12 h-12 tool-btn rounded-full flex items-center justify-center" title="Field Guide">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Task & Tutorial -->
+             <div class="lg:col-span-4 task-panel p-6 rounded-lg">
+                <div class="flex space-x-4 border-b border-gray-700 mb-4">
+                    <button id="taskTabBtn" class="tab-btn active text-lg font-semibold">Task</button>
+                    <button id="tutorialTabBtn" class="tab-btn text-lg font-semibold text-gray-400">Tutorial</button>
+                </div>
+
+                <div id="taskContent">
+                     <h2 class="text-xl font-semibold text-white mb-4">Do you spot a transit?</h2>
+                    <p class="text-gray-300 text-sm mb-6">
+                        If so, please mark it on the lightcurve to the left! An exoplanet passing in front of its star causes a 'transit'. Click and drag on the graph to mark the areas where you think this is occurring.
+                    </p>
+                    <div class="space-y-4">
+                        <button id="checkButton" class="w-full btn btn-primary font-bold py-3 px-4 rounded-lg shadow-lg">Check My Transits</button>
+                        <button id="resetButton" class="w-full btn btn-secondary font-bold py-3 px-4 rounded-lg shadow-lg">Reset Selections</button>
+                        <button id="newStarButton" class="w-full btn btn-secondary font-bold py-3 px-4 rounded-lg shadow-lg">Analyze a New Star</button>
+                    </div>
+                     <div id="score" class="mt-6 text-center text-lg">
+                        <p>Score: <span id="scoreValue" class="font-bold">0</span></p>
+                        <p>Stars Analyzed: <span id="starsAnalyzed" class="font-bold">1</span></p>
+                    </div>
+                </div>
+
+                <div id="tutorialContent" class="hidden guide-content-section pr-2">
+                    <h2 class="text-xl font-semibold text-white mb-4">Welcome to Exoplanet Hunters!</h2>
+                    <p class="text-gray-300">This short tutorial will teach you how to search for exoplanets.</p>
+                    <h4 class="text-lg font-semibold mt-4">Transits</h4>
+                    <p>Transits will be a few low points, usually in a U-shape. You're looking for several points on the lightcurve that appear lower than the rest.</p>
+                    <img src="https://placehold.co/600x150/0a0a1a/e0e0e0?text=U-Shaped+Dip+is+a+Transit" alt="Transit example">
+                    <h4 class="text-lg font-semibold mt-4">Marking a Transit</h4>
+                    <p>To mark a transit, click your mouse on one side of the dip, drag your mouse across to the other side, and release. A shaded box will appear.</p>
+                     <img src="https://placehold.co/600x150/0a0a1a/e0e0e0?text=Click+and+drag+to+select" alt="Marking transit example">
+                    <h4 class="text-lg font-semibold mt-4">Dive In!</h4>
+                    <p>You're ready to start! If you need help while classifying, the **Field Guide** (the '?' button next to the graph) has examples of planet transits and other phenomena you'll encounter. Good luck!</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="fixed inset-0 flex items-center justify-center p-4 feedback-modal hidden z-50">
+        <div class="bg-[#1f2937] rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-4"></h2>
+            <p id="modalMessage" class="text-gray-300 mb-6"></p>
+            <div id="modal-feedback-chart-container" class="mb-6">
+                <canvas id="modalChart"></canvas>
+            </div>
+            <button id="closeModalButton" class="w-full btn btn-primary font-bold py-3 px-4 rounded-lg">
+                Continue Analysis
+            </button>
+        </div>
+    </div>
+    
+    <!-- Field Guide Modal -->
+    <div id="fieldGuideModal" class="fixed inset-0 flex items-center justify-center p-4 field-guide-modal hidden z-50">
+        <div class="bg-[#1f2937] rounded-2xl shadow-2xl p-8 max-w-4xl w-full text-left relative">
+            <button id="closeGuideBtn" class="absolute top-4 right-4 text-gray-400 hover:text-white z-20">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div id="guide-main">
+                <h2 class="text-3xl font-bold mb-6 text-white border-b border-gray-600 pb-3">Exoplanet Hunter Field Guide</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="guide-item col-span-2 md:col-span-1 p-4 rounded-lg flex items-center space-x-4" data-guide="planet-transits">
+                        <img src="https://thumbnails.zooniverse.org/100x100/panoptes-uploads.zooniverse.org/field_guide_attached_image/af5cf99c-57e3-4a26-a1f3-e441269a6412.png" alt="Planet Transit Icon" class="rounded-md">
+                        <div><h3 class="font-bold text-lg text-white">Planet Transits</h3><p class="text-sm text-gray-300">The U-shaped dips you're looking for.</p></div>
+                    </div>
+                    <div class="guide-item col-span-2 md:col-span-1 p-4 rounded-lg flex items-center space-x-4" data-guide="eclipsing-binaries">
+                        <img src="https://thumbnails.zooniverse.org/100x100/panoptes-uploads.zooniverse.org/field_guide_attached_image/2043ca16-9dd4-4cdd-af32-94971b692383.jpeg" alt="Eclipsing Binary Icon" class="rounded-md">
+                         <div><h3 class="font-bold text-lg text-white">Eclipsing Binaries</h3><p class="text-sm text-gray-300">V-shaped dips from orbiting stars.</p></div>
+                    </div>
+                    <div class="guide-item col-span-2 md:col-span-1 p-4 rounded-lg flex items-center space-x-4" data-guide="stellar-variability">
+                       <img src="https://thumbnails.zooniverse.org/100x100/panoptes-uploads.zooniverse.org/field_guide_attached_image/eb5408b3-7555-4050-896a-300fc3680e76.png" alt="Stellar Variability Icon" class="rounded-md">
+                         <div><h3 class="font-bold text-lg text-white">Stellar Variability</h3><p class="text-sm text-gray-300">Natural brightness changes in stars.</p></div>
+                    </div>
+                    <div class="guide-item col-span-2 md:col-span-1 p-4 rounded-lg flex items-center space-x-4" data-guide="systematic-effects">
+                        <img src="https://thumbnails.zooniverse.org/100x100/panoptes-uploads.zooniverse.org/field_guide_attached_image/704ec094-56cb-477e-b650-b22fc0e34d56.jpeg" alt="Systematic Effects Icon" class="rounded-md">
+                        <div><h3 class="font-bold text-lg text-white">Systematic Effects</h3><p class="text-sm text-gray-300">Instrument glitches and data artifacts.</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guide Content Sections -->
+            <div id="planet-transits" class="guide-content-section hidden pr-4">
+                <button class="back-to-guide-btn mb-4 flex items-center text-blue-400 hover:text-blue-300"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>Back to Field Guide</button>
+                <h3 class="text-2xl font-bold text-blue-400 mb-4">Planet Transits</h3>
+                <p>Spotting transiting planets from lightcurves can be tricky...</p>
+                <h4>SHORT PERIOD PLANET/MANY TRANSIT</h4>
+                <p>Some transits are have a characteristic U-shape. It is always good to look out for this!</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/2161844e-51e8-44ba-90f8-911f71c8c483.png">
+                <p>Some like to hide in the stellar variability and may be more difficult to find.</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/7996e525-17f4-476d-8daa-3218a9547698.png">
+                <p>The smaller the gap between subsequent transits, the quicker the planet completes a full orbit around the host star.</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/e7ba53cf-7ebb-4719-83bf-06ffd28a2a6d.png">
+                <h4>LONG PERIOD PLANET/SINGLE TRANSIT</h4>
+                <p>If the orbital period is very long, there may only be one transit visible!</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/9dc7800c-0bfd-4d6a-b261-5f8cc68cfba4.png">
+                <h4>MULTI-PLANET SYSTEMS</h4>
+                <p>Uneven spacing is indicative of there being multiple planets.</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/453af6d6-aed4-4d1a-8870-703da96c03de.png">
+            </div>
+            <div id="eclipsing-binaries" class="guide-content-section hidden pr-4">
+                <button class="back-to-guide-btn mb-4 flex items-center text-yellow-400 hover:text-yellow-300"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>Back to Field Guide</button>
+                <h3 class="text-2xl font-bold text-yellow-400 mb-4">Eclipsing Binaries</h3>
+                <p>When one star passes in front of the other we see a dip in the lightcurve, known as an eclipsing binary. These tend to be more V-shaped.</p>
+                <h4>ALTERNATING DIPS</h4>
+                <p>Lightcurves of eclipsing binaries can often be identified due to the repetition two dips of different depths.</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/8976ae89-b559-4fc5-8e03-8e6ff53d3635.png">
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/8cbc0038-1c9e-48f5-abe5-ad07281e4737.png">
+            </div>
+            <div id="stellar-variability" class="guide-content-section hidden pr-4">
+                <button class="back-to-guide-btn mb-4 flex items-center text-purple-400 hover:text-purple-300"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>Back to Field Guide</button>
+                <h3 class="text-2xl font-bold text-purple-400 mb-4">Stellar Variability</h3>
+                <p>The natural variability of stars can have a strong effect on the observed lightcurves, making the transits harder to spot.</p>
+                <h4>STARSPOTS</h4>
+                <p>As stars rotate, these spots move around with them, resulting in variable lightcurves.</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/71b4a825-5fe6-4835-bfa7-6299a9e46701.png">
+                <h4>PULSATING</h4>
+                <p>Certain stars periodically increase and decrease in brightness. These variations can be very rapid, and can make transiting planets very difficult to see.</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/c23c6bac-25ba-4d53-ad69-d34b2077cc11.png">
+            </div>
+            <div id="systematic-effects" class="guide-content-section hidden pr-4">
+                <button class="back-to-guide-btn mb-4 flex items-center text-red-400 hover:text-red-300"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>Back to Field Guide</button>
+                <h3 class="text-2xl font-bold text-red-400 mb-4">Systematic Effects</h3>
+                <p>Glitches in the equipment can cause strange shapes in the data.</p>
+                <p>Sometimes it shows up as a set of unusually scattered point over this time range.</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/30140fd0-08e4-4a6a-a618-62c1f0528367.png">
+                <p>Other times, you might see a sudden jump in the lightcurve.</p>
+                <img src="https://thumbnails.zooniverse.org/999x/panoptes-uploads.zooniverse.org/production/project_attached_image/36a91693-a95d-48f3-8308-00ebfbcd356e.png">
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const chartCanvas = document.getElementById('lightCurveChart');
+        const ctx = chartCanvas.getContext('2d');
+        const checkButton = document.getElementById('checkButton');
+        const resetButton = document.getElementById('resetButton');
+        const newStarButton = document.getElementById('newStarButton');
+        const feedbackModal = document.getElementById('feedbackModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const closeModalButton = document.getElementById('closeModalButton');
+        const scoreValue = document.getElementById('scoreValue');
+        const starsAnalyzed = document.getElementById('starsAnalyzed');
+        const modalChartCanvas = document.getElementById('modalChart');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
+        const fieldGuideBtn = document.getElementById('fieldGuideBtn');
+        const fieldGuideModal = document.getElementById('fieldGuideModal');
+        const closeGuideBtn = document.getElementById('closeGuideBtn');
+
+        // Tab elements
+        const taskTabBtn = document.getElementById('taskTabBtn');
+        const tutorialTabBtn = document.getElementById('tutorialTabBtn');
+        const taskContent = document.getElementById('taskContent');
+        const tutorialContent = document.getElementById('tutorialContent');
+
+        // Field Guide elements
+        const guideMain = document.getElementById('guide-main');
+        const guideItems = document.querySelectorAll('.guide-item');
+        const guideContentSections = document.querySelectorAll('.guide-content-section');
+        const backToGuideBtns = document.querySelectorAll('.back-to-guide-btn');
+
+        let lightCurveChart;
+        let modalChart;
+        let currentData, userSelections = [], actualTransits = [], isDragging = false, dragStartX = null, dragSelection = null, score = 0, stars = 1;
+
+        // --- Game Logic ---
+
+        // Plugin to handle drawing selections on the chart canvas
+        const selectionPlugin = {
+            id: 'selectionPlugin',
+            afterDraw: (chart) => {
+                if (chart.canvas.id !== 'lightCurveChart') return;
+                
+                const ctx = chart.ctx;
+                const area = chart.chartArea;
+
+                userSelections.forEach(selection => {
+                    const startPixel = chart.scales.x.getPixelForValue(selection.start);
+                    const endPixel = chart.scales.x.getPixelForValue(selection.end);
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.5)';
+                    ctx.fillRect(startPixel, area.top, endPixel - startPixel, area.height);
+                    ctx.restore();
+                });
+
+                if (isDragging && dragSelection) {
+                    const startPixel = chart.scales.x.getPixelForValue(dragSelection.start);
+                    const endPixel = chart.scales.x.getPixelForValue(dragSelection.end);
+
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
+                    ctx.fillRect(Math.min(startPixel, endPixel), area.top, Math.abs(endPixel - startPixel), area.height);
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(Math.min(startPixel, endPixel), area.top, Math.abs(endPixel - startPixel), area.height);
+                    ctx.restore();
+                }
+            }
+        };
+
+        function generateLightCurve() {
+            const data = [];
+            const numPoints = 200;
+            const transitWidth = 8;
+            const transitDepth = 0.05 + Math.random() * 0.1;
+            actualTransits = [];
+
+            const numTransits = Math.floor(Math.random() * 3) + 1;
+            let transitPositions = [];
+            for (let i = 0; i < numTransits; i++) {
+                let pos;
+                let validPosition = false;
+                while (!validPosition) {
+                    pos = Math.floor(Math.random() * (numPoints - transitWidth - 20)) + 10;
+                    validPosition = !transitPositions.some(p => Math.abs(p - pos) < transitWidth * 2);
+                }
+                transitPositions.push(pos);
+                actualTransits.push({ start: pos, end: pos + transitWidth });
+            }
+
+            for (let i = 0; i < numPoints; i++) {
+                let brightness = 1.0;
+                for (const transit of actualTransits) {
+                    if (i >= transit.start && i <= transit.end) {
+                        brightness -= transitDepth;
+                        break;
+                    }
+                }
+                brightness += (Math.random() - 0.5) * 0.02;
+                data.push({ x: i, y: brightness });
+            }
+            return data;
+        }
+
+        function drawChart() {
+             if (lightCurveChart) {
+                lightCurveChart.destroy();
+            }
+            currentData = generateLightCurve();
+
+            lightCurveChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Starlight Brightness',
+                        data: currentData,
+                        backgroundColor: 'rgba(167, 243, 208, 0.7)',
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: { display: true, text: 'Time (Days)', color: '#9ca3af' },
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9ca3af' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Relative Brightness', color: '#9ca3af' },
+                            min: Math.min(...currentData.map(p => p.y)) - 0.02,
+                            max: 1.02,
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9ca3af' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false },
+                        zoom: {
+                            pan: { enabled: true, mode: 'x', },
+                            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x', }
+                        }
+                    },
+                    animation: { duration: 0 }
+                },
+                plugins: [selectionPlugin]
+            });
+        }
+
+        // --- Event Handlers ---
+        
+        chartCanvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            const rect = chartCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            dragStartX = lightCurveChart.scales.x.getValueForPixel(x);
+            dragSelection = { start: dragStartX, end: dragStartX };
+        });
+        
+        chartCanvas.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const rect = chartCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const currentX = lightCurveChart.scales.x.getValueForPixel(x);
+            dragSelection.end = currentX;
+            lightCurveChart.render();
+        });
+
+        chartCanvas.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            const start = Math.min(dragSelection.start, dragSelection.end);
+            const end = Math.max(dragSelection.start, dragSelection.end);
+            if (Math.abs(end - start) > 1) {
+                 userSelections.push({ start, end });
+            }
+            dragSelection = null;
+            lightCurveChart.update();
+        });
+        
+        chartCanvas.addEventListener('mouseleave', () => {
+             if (isDragging) {
+                isDragging = false;
+                dragSelection = null;
+                lightCurveChart.update();
+            }
+        });
+        
+        checkButton.addEventListener('click', () => {
+             if (userSelections.length === 0) { showFeedback('No Transits Marked', 'You haven\'t marked any potential transits. Click and drag on the graph to select areas where you see a dip in brightness.'); return; }
+            let correctSelections = 0, missedTransits = actualTransits.length, incorrectSelections = 0;
+            const feedbackAnnotations = [], tempUserSelections = JSON.parse(JSON.stringify(userSelections)), tempActualTransits = JSON.parse(JSON.stringify(actualTransits));
+            tempUserSelections.forEach(userSel => {
+                let matchFound = false;
+                tempActualTransits.forEach(actualTransit => {
+                    const overlap = Math.max(0, Math.min(userSel.end, actualTransit.end) - Math.max(userSel.start, actualTransit.start));
+                    if (overlap / (userSel.end - userSel.start) > 0.5) {
+                        correctSelections++; missedTransits--; matchFound = true; actualTransit.matched = true;
+                        feedbackAnnotations.push({ type: 'box', xMin: userSel.start, xMax: userSel.end, backgroundColor: 'rgba(74, 222, 128, 0.4)', borderColor: 'rgb(74, 222, 128)', borderWidth: 2 });
+                        return;
+                    }
+                });
+                if(!matchFound) { incorrectSelections++; feedbackAnnotations.push({ type: 'box', xMin: userSel.start, xMax: userSel.end, backgroundColor: 'rgba(248, 113, 113, 0.4)', borderColor: 'rgb(248, 113, 113)', borderWidth: 2 }); }
+            });
+            tempActualTransits.forEach(t => { if (!t.matched) feedbackAnnotations.push({ type: 'box', xMin: t.start, xMax: t.end, backgroundColor: 'rgba(251, 191, 36, 0.4)', borderColor: 'rgb(251, 191, 36)', borderWidth: 2, borderDash: [6, 6] }); });
+            let title, message;
+            if (correctSelections === actualTransits.length && incorrectSelections === 0) { title = 'Discovery!'; message = `Excellent work, Hunter! You've correctly identified all ${actualTransits.length} transits.`; score += 100 * actualTransits.length; }
+            else if (correctSelections > 0) { title = 'Good Observations!'; message = `You found ${correctSelections} transit(s). You missed ${actualTransits.length - correctSelections} and had ${incorrectSelections} incorrect marks.`; score += 50 * correctSelections - 25 * incorrectSelections; }
+            else { title = 'Keep Searching!'; message = `No correct transits were identified. Green are correct, red are incorrect, and yellow are missed.`; score -= 25 * userSelections.length; }
+            scoreValue.innerText = Math.max(0, score);
+            showFeedback(title, message, feedbackAnnotations);
+        });
+        
+        resetButton.addEventListener('click', () => { userSelections = []; lightCurveChart.update(); });
+        newStarButton.addEventListener('click', () => { userSelections = []; stars++; starsAnalyzed.innerText = stars; drawChart(); });
+        closeModalButton.addEventListener('click', () => { feedbackModal.classList.add('hidden'); newStarButton.click(); });
+        
+        zoomInBtn.addEventListener('click', () => lightCurveChart.zoom(1.2));
+        zoomOutBtn.addEventListener('click', () => lightCurveChart.zoom(0.8));
+        resetZoomBtn.addEventListener('click', () => lightCurveChart.resetZoom());
+
+        // --- Tab Logic ---
+        taskTabBtn.addEventListener('click', () => {
+            taskContent.classList.remove('hidden');
+            tutorialContent.classList.add('hidden');
+            taskTabBtn.classList.add('active');
+            tutorialTabBtn.classList.remove('active');
+            taskTabBtn.classList.remove('text-gray-400');
+            tutorialTabBtn.classList.add('text-gray-400');
+        });
+
+        tutorialTabBtn.addEventListener('click', () => {
+            tutorialContent.classList.remove('hidden');
+            taskContent.classList.add('hidden');
+            tutorialTabBtn.classList.add('active');
+            taskTabBtn.classList.remove('active');
+            tutorialTabBtn.classList.remove('text-gray-400');
+            taskTabBtn.classList.add('text-gray-400');
+        });
+
+        // --- Field Guide Logic ---
+        function showGuideSection(sectionId) { guideMain.classList.add('hidden'); guideContentSections.forEach(s => s.id === sectionId ? (s.classList.remove('hidden'), s.scrollTop = 0) : s.classList.add('hidden')); }
+        function showGuideMain() { guideMain.classList.remove('hidden'); guideContentSections.forEach(s => s.classList.add('hidden')); }
+        fieldGuideBtn.addEventListener('click', () => { showGuideMain(); fieldGuideModal.classList.remove('hidden'); });
+        closeGuideBtn.addEventListener('click', () => fieldGuideModal.classList.add('hidden'));
+        guideItems.forEach(item => item.addEventListener('click', () => showGuideSection(item.dataset.guide)));
+        backToGuideBtns.forEach(btn => btn.addEventListener('click', () => showGuideMain()));
+
+        function showFeedback(title, message, annotations = []) {
+            modalTitle.textContent = title; modalMessage.textContent = message;
+            if (modalChart) modalChart.destroy();
+            Chart.register(window['chartjs-plugin-annotation']);
+            modalChart = new Chart(modalChartCanvas.getContext('2d'), {
+                type: 'scatter', data: { datasets: [{ data: currentData, backgroundColor: 'rgba(167, 243, 208, 0.7)' }] },
+                options: { scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false }, annotation: { annotations: annotations } }, elements: { point: { radius: 2 } } }
+            });
+            feedbackModal.classList.remove('hidden');
+        }
+
+        // Initial load
+        window.onload = () => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js';
+            script.onload = () => { Chart.register(window['chartjs-plugin-annotation']); drawChart(); };
+            document.head.appendChild(script);
+        };
+    </script>
+</body>
+</html>
+
