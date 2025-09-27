@@ -393,7 +393,7 @@ const App = () => {
     </div>
   );
 
-const MoonPhaseSimulator = () => {
+  const MoonPhaseSimulator = () => {
   const getPhaseInfo = (angle: number) => {
     const normalizedAngle = (angle - 180 + 360) % 360;
     if (normalizedAngle >= 355 || normalizedAngle < 5) return { phase: "New Moon", eclipse: "Solar Eclipse Possible!" };
@@ -406,14 +406,23 @@ const MoonPhaseSimulator = () => {
     return { phase: "Waning Crescent", eclipse: "" };
   };
 
-  const handleAnimationToggle = useCallback(() => {
+  // Create stable callback functions
+  const handleAnimationToggle = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsAnimating(prev => !prev);
-  }, []);
+  }, [setIsAnimating]);
 
-  const handleReset = useCallback(() => {
+  const handleReset = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setMoonPhase(180);
     setIsAnimating(false);
-  }, []);
+  }, [setMoonPhase, setIsAnimating]);
+
+  const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setMoonPhase(parseInt(e.target.value));
+  }, [setMoonPhase]);
 
   const phaseInfo = getPhaseInfo(moonPhase);
   const shadowX = -100 + ((moonPhase - 180 + 360) % 360 / 180) * 200;
@@ -450,20 +459,22 @@ const MoonPhaseSimulator = () => {
         min="0" 
         max="360" 
         value={moonPhase} 
-        onChange={(e) => setMoonPhase(parseInt(e.target.value))} 
+        onChange={handleSliderChange}
         className="w-1/2 mx-auto" 
       />
       <div className="flex justify-center gap-4 mt-4">
         <button 
-          onClick={handleAnimationToggle} 
+          onClick={handleAnimationToggle}
           className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-full transition-colors"
+          type="button"
         >
           {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           {isAnimating ? 'Pause' : 'Play'}
         </button>
         <button 
-          onClick={handleReset} 
+          onClick={handleReset}
           className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
+          type="button"
         >
           <RotateCcw className="w-4 h-4" />
           Reset
