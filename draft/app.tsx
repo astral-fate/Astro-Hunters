@@ -117,7 +117,7 @@ const App = () => {
   const [loading, setLoading] = useState<StatusState>({});
   const [apiErrors, setApiErrors] = useState<StatusState>({});
 
-  const NASA_API_KEY = 'DEMO_KEY'; 
+  const NASA_API_KEY = '8cvVfO7F62medHZ3Q1CIQqigHbGGlXH3G2sPfNX6'; 
 
   // --- DATA ARRAYS (FROM SPACE.TSX) ---
   const planetData: Planet[] = [
