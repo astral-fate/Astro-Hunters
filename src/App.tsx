@@ -1141,10 +1141,10 @@ const App = () => {
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Our Solar System</h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">Explore our cosmic neighborhood. Click any planet to see detailed facts and discover unique, real-time phenomena powered by NASA APIs.</p>
-          <button onClick={() => setSolarSystemAnimation(!solarSystemAnimation)} className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 rounded-full flex items-center gap-2 mx-auto transition-colors">
+          {/* <button onClick={() => setSolarSystemAnimation(!solarSystemAnimation)} className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 rounded-full flex items-center gap-2 mx-auto transition-colors">
             {solarSystemAnimation ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             {solarSystemAnimation ? 'Pause Animation' : 'Start Animation'}
-          </button>
+          </button> */}
         </div>
         <div className="relative flex items-center justify-center mb-16 h-96">
           <div className="absolute z-20 rounded-full shadow-2xl cursor-pointer hover:scale-110 transition-transform" style={{ width: '60px', height: '60px', background: 'radial-gradient(circle, #ffd700, #ff8c00)', boxShadow: '0 0 30px #ff8c00' }}></div>
@@ -1920,7 +1920,7 @@ const App = () => {
 
         <div className="mt-12 pt-8 border-t border-gray-800 text-center">
           <p className="text-gray-400">
-            © 2024 Astro Hunters. Educational content inspired by real space missions and citizen science initiatives.
+            © 2025 Astro Hunters. Educational content inspired by real space missions and citizen science initiatives.
           </p>
         </div>
       </div>
