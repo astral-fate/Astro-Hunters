@@ -1,13 +1,14 @@
+ 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { 
-  ChevronDown, 
-  Play, 
-  Pause, 
-  Search, 
-  Users, 
-  Globe, 
-  Telescope, 
+import {
+  ChevronDown,
+  Play,
+  Pause,
+  Search,
+  Users,
+  Globe,
+  Telescope,
   Star,
   Sun,
   Moon,
@@ -17,12 +18,12 @@ import {
   Target,
   Award,
   BookOpen,
-  RotateCcw, 
-  Calendar, 
-  Camera, 
-  AlertTriangle, 
+  RotateCcw,
+  Calendar,
+  Camera,
+  AlertTriangle,
   RefreshCw,
-  BarChart3, 
+  BarChart3,
   Video
 } from 'lucide-react';
 
@@ -56,10 +57,10 @@ type MarsPhoto = {
 
 type Planet = {
     name: string;
-    distance?: number; 
+    distance?: number;
     size: number;
     color: string;
-    speed?: number; 
+    speed?: number;
     description: string;
     facts: { [key: string]: string | number };
     phenomena: { id: string; title: string; description: string; icon: string }[];
@@ -87,7 +88,7 @@ interface FeedbackData {
 
 const App = () => {
   // --- STATE MANAGEMENT (MERGED FROM BOTH FILES) ---
-  
+
   const [activeSection, setActiveSection] = useState('hero');
   const [solarSystemAnimation, setSolarSystemAnimation] = useState(false);
   const [currentExoplanetType, setCurrentExoplanetType] = useState(0);
@@ -108,7 +109,7 @@ const App = () => {
   const [moonPhase, setMoonPhase] = useState(180);
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedPlanet, setSelectedPlanet] = useState<Planet | null>(null);
-  
+
   const [apodData, setApodData] = useState<ApodData | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [marsPhotos, setMarsPhotos] = useState<MarsPhoto[]>([]);
@@ -117,7 +118,8 @@ const App = () => {
   const [loading, setLoading] = useState<StatusState>({});
   const [apiErrors, setApiErrors] = useState<StatusState>({});
 
-  const NASA_API_KEY = 'XMJwjhd5Nx0Ug8WClB0TGYDe5pEIHNOYIwLNCgea'; 
+  // --- CORRECTED API KEY ---
+  const NASA_API_KEY = '8cvVfO7F62medHZ3Q1CIQqigHbGGlXH3G2sPfNX6';
 
   // --- DATA ARRAYS (FROM SPACE.TSX) ---
   const planetData: Planet[] = [
@@ -131,13 +133,16 @@ const App = () => {
     { name: 'Neptune', distance: 480, size: 24, color: '#4b70dd', period: 60190, description: "The eighth and most distant major planet orbiting our Sun.", facts: { "Diameter": "49,244 km", "Winds": "2,000 km/h", "Moons": "14" }, phenomena: [] }
   ];
 
-  // --- API FUNCTIONS (FROM SPACE.TSX) ---
+  // --- API FUNCTIONS (WITH IMPROVED ERROR HANDLING) ---
   const fetchAPOD = useCallback(async (date: string) => {
     setLoading(prev => ({ ...prev, apod: true }));
     setApiErrors(prev => ({ ...prev, apod: null }));
     try {
       const response = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KEY}&date=${date}`);
-      if (!response.ok) throw new Error('Failed to fetch APOD data.');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ msg: 'Could not parse error response.' }));
+        throw new Error(`HTTP error! status: ${response.status} - ${errorData.msg || 'Failed to fetch data.'}`);
+      }
       const data = await response.json();
       setApodData(data);
     } catch (error: any) {
@@ -153,7 +158,10 @@ const App = () => {
     setApiErrors(prev => ({ ...prev, mars: null }));
     try {
       const response = await fetch(`https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/latest_photos?api_key=${NASA_API_KEY}`);
-      if (!response.ok) throw new Error('Failed to fetch Mars Rover photos.');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ msg: 'Could not parse error response.' }));
+        throw new Error(`HTTP error! status: ${response.status} - ${errorData.errors || 'Failed to fetch data.'}`);
+      }
       const data = await response.json();
       setMarsPhotos(data.latest_photos.slice(0, 20));
     } catch (error: any) {
@@ -169,7 +177,9 @@ const App = () => {
     setApiErrors(prev => ({ ...prev, earth: null }));
     try {
       const response = await fetch(`https://eonet.gsfc.nasa.gov/api/v2.1/events?limit=20&status=open`);
-      if (!response.ok) throw new Error('Failed to fetch Earth events.');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setEarthEvents(data.events);
     } catch (error: any) {
@@ -186,7 +196,10 @@ const App = () => {
     const today = new Date().toISOString().split('T')[0];
     try {
       const response = await fetch(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${today}&end_date=${today}&api_key=${NASA_API_KEY}`);
-      if (!response.ok) throw new Error('Failed to fetch Near Earth Objects.');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Could not parse error response.' }));
+        throw new Error(`HTTP error! status: ${response.status} - ${errorData.error?.message || 'Failed to fetch data.'}`);
+      }
       const data = await response.json();
       const neoData = data.near_earth_objects[today] || [];
       neoData.sort((a: any, b: any) => a.close_approach_data[0].miss_distance.kilometers - b.close_approach_data[0].miss_distance.kilometers);
@@ -198,6 +211,7 @@ const App = () => {
       setLoading(prev => ({ ...prev, neo: false }));
     }
   }, [NASA_API_KEY]);
+
 
   // --- USEEFFECT HOOKS (MERGED) ---
 
@@ -229,7 +243,7 @@ const App = () => {
       return () => clearInterval(interval);
     }
   }, [isAnimating]);
-  
+
   const generateLightCurve = useCallback(() => {
     const data: LightCurvePoint[] = [];
     const numPoints = 200;
@@ -239,7 +253,7 @@ const App = () => {
 
     const numTransits = Math.floor(Math.random() * 3) + 1;
     const transitPositions: number[] = [];
-    
+
     for (let i = 0; i < numTransits; i++) {
         let pos: number | null = null;
         let validPosition = false;
@@ -294,7 +308,7 @@ const App = () => {
       </div>
     );
   };
-  
+
   const APIDebugPanel = () => {
     const getStatusIcon = (loading: boolean | null | string, data: any, error: boolean | null | string) => {
       if (loading) return '🟡';
@@ -349,18 +363,25 @@ const App = () => {
           </div>
           {apiErrors.apod && <p className="text-red-400 text-sm mt-2">{String(apiErrors.apod)}</p>}
         </div>
-        {apodData && !apiErrors.apod && (
+        <ApiContentHandler loading={!!loading.apod} error={apiErrors.apod as string} data={apodData ? [apodData] : []} onRetry={() => fetchAPOD(selectedDate)} loadingText="Traveling through time..." emptyText="Select a date to see the picture of the day.">
+        {(data) => (
           <div className="space-y-4">
             <div className="aspect-video bg-gray-800 rounded-lg overflow-hidden">
-              {apodData.media_type === 'image' ? <img src={apodData.url} alt={apodData.title} className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full"><p className="text-gray-400">Video content - view at NASA</p></div>}
+                {data[0].media_type === 'image' ? (
+                    <img src={data[0].url} alt={data[0].title} className="w-full h-full object-cover" onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.currentTarget.parentNode as HTMLElement).innerHTML = '<p class="text-center p-4">Image failed to load.</p>'; }} />
+                ) : (
+                    <div className="flex items-center justify-center h-full"><p className="text-gray-400">Video content - view at NASA</p></div>
+                )}
             </div>
             <div>
-              <h4 className="font-bold text-lg text-white">{apodData.title}</h4>
+              <h4 className="font-bold text-lg text-white">{data[0].title}</h4>
               <p className="text-gray-300 text-sm">{selectedDate}</p>
-              <p className="text-gray-400 text-sm mt-2 line-clamp-3">{apodData.explanation}</p>
+              <p className="text-gray-400 text-sm mt-2 line-clamp-3">{data[0].explanation}</p>
+              {data[0].copyright && <p className="text-xs text-gray-500 mt-1">© {data[0].copyright}</p>}
             </div>
           </div>
         )}
+        </ApiContentHandler>
       </div>
     </div>
   );
@@ -426,7 +447,7 @@ const App = () => {
 
   const phaseInfo = getPhaseInfo(moonPhase);
   const shadowX = -100 + ((moonPhase - 180 + 360) % 360 / 180) * 200;
-  
+
   return (
     <div className="space-y-6 text-center">
       <h3 className="text-2xl font-bold mb-4 text-indigo-300">Moon Phases & Eclipses</h3>
@@ -437,8 +458,8 @@ const App = () => {
           <div className="relative border-2 border-dashed border-gray-500 rounded-full w-72 h-72">
             <div className="absolute bg-blue-500 rounded-full w-16 h-16 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
             <div className="absolute w-5 h-5 bg-gray-300 rounded-full"
-              style={{ 
-                top: '50%', 
+              style={{
+                top: '50%',
                 left: '50%',
                 transform: `translate(-50%, -50%) rotate(${moonPhase}deg) translateX(136px) translate(-50%, -50%)`
               }} />
@@ -454,16 +475,16 @@ const App = () => {
           {phaseInfo.eclipse && <p className="mt-2 text-lg font-semibold text-yellow-400">{phaseInfo.eclipse}</p>}
         </div>
       </div>
-      <input 
-        type="range" 
-        min="0" 
-        max="360" 
-        value={moonPhase} 
+      <input
+        type="range"
+        min="0"
+        max="360"
+        value={moonPhase}
         onChange={handleSliderChange}
-        className="w-1/2 mx-auto" 
+        className="w-1/2 mx-auto"
       />
       <div className="flex justify-center gap-4 mt-4">
-        <button 
+        <button
           onClick={handleAnimationToggle}
           className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-full transition-colors"
           type="button"
@@ -471,7 +492,7 @@ const App = () => {
           {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           {isAnimating ? 'Pause' : 'Play'}
         </button>
-        <button 
+        <button
           onClick={handleReset}
           className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
           type="button"
@@ -591,7 +612,7 @@ const App = () => {
                         className="w-full h-48 bg-gray-900 rounded-lg"
                     />
                 </div>
-                
+
                 <div className="flex gap-4 justify-center">
                     <button
                         onClick={() => {
@@ -612,7 +633,7 @@ const App = () => {
   // --- NEW TRANSIT SECTION ---
   const EnhancedTransitSection = () => {
     const [activeTab, setActiveTab] = useState('explanation');
-    
+
     const TransitAnimation = () => {
       const [isAnimating, setIsAnimating] = useState(false);
       const [animationTime, setAnimationTime] = useState(0);
@@ -620,13 +641,13 @@ const App = () => {
       const canvasRef = useRef<HTMLCanvasElement>(null);
       const lightCurveCanvasRef = useRef<HTMLCanvasElement>(null);
       const animationFrameRef = useRef<number | null>(null);
-  
+
       // Animation parameters
       const orbitRadius = 150;
       const starRadius = 45;
       const planetRadius = 10;
       const animationDuration = 8000;
-  
+
       useEffect(() => {
         if (isAnimating) {
           const animate = () => {
@@ -639,38 +660,38 @@ const App = () => {
             cancelAnimationFrame(animationFrameRef.current);
           }
         }
-  
+
         return () => {
           if (animationFrameRef.current) {
             cancelAnimationFrame(animationFrameRef.current);
           }
         };
       }, [isAnimating, speed]);
-  
+
       const progress = (animationTime / animationDuration) * 2 * Math.PI;
       const planetX = Math.cos(progress) * orbitRadius;
       const planetY = Math.sin(progress) * orbitRadius * 0.3;
       const isTransiting = Math.abs(planetX) < starRadius + planetRadius && planetY > -10;
       const transitDepth = isTransiting ? Math.max(0, 1 - Math.abs(planetX) / (starRadius + planetRadius)) : 0;
-  
+
       // Draw main animation
       useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-  
+
         const ctx = canvas.getContext('2d');
         if(!ctx) return;
         const rect = canvas.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
-  
+
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
-  
+
         // Clear canvas
         ctx.fillStyle = '#0a0a1a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
         // Add stars background
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         for (let i = 0; i < 50; i++) {
@@ -680,7 +701,7 @@ const App = () => {
           ctx.arc(x, y, Math.random() * 1 + 0.5, 0, 2 * Math.PI);
           ctx.fill();
         }
-  
+
         // Draw orbit path
         ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
         ctx.lineWidth = 2;
@@ -689,11 +710,11 @@ const App = () => {
         ctx.ellipse(centerX, centerY, orbitRadius, orbitRadius * 0.3, 0, 0, 2 * Math.PI);
         ctx.stroke();
         ctx.setLineDash([]);
-  
+
         // Draw star with glow effect
         const starCenterX = centerX;
         const starCenterY = centerY;
-        
+
         // Star glow
         const gradient = ctx.createRadialGradient(starCenterX, starCenterY, 0, starCenterX, starCenterY, starRadius * 1.5);
         gradient.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
@@ -703,18 +724,18 @@ const App = () => {
         ctx.beginPath();
         ctx.arc(starCenterX, starCenterY, starRadius * 1.5, 0, 2 * Math.PI);
         ctx.fill();
-  
+
         // Star body
         ctx.fillStyle = '#ffd700';
         ctx.beginPath();
         ctx.arc(starCenterX, starCenterY, starRadius, 0, 2 * Math.PI);
         ctx.fill();
-  
+
         // Calculate planet position
         const actualPlanetX = centerX + planetX;
         const actualPlanetY = centerY + planetY;
         const planetZ = Math.sin(progress) * orbitRadius;
-  
+
         // Draw planet shadow on star during transit
         if (isTransiting && planetZ < 0) {
           const shadowOpacity = transitDepth * 0.6;
@@ -723,7 +744,7 @@ const App = () => {
           ctx.arc(actualPlanetX, actualPlanetY, planetRadius * 1.1, 0, 2 * Math.PI);
           ctx.fill();
         }
-  
+
         // Draw planet
         const planetGradient = ctx.createRadialGradient(
           actualPlanetX - 3, actualPlanetY - 3, 0,
@@ -732,12 +753,12 @@ const App = () => {
         planetGradient.addColorStop(0, '#4fc3f7');
         planetGradient.addColorStop(0.6, '#1976d2');
         planetGradient.addColorStop(1, '#0d47a1');
-        
+
         ctx.fillStyle = planetGradient;
         ctx.beginPath();
         ctx.arc(actualPlanetX, actualPlanetY, planetRadius, 0, 2 * Math.PI);
         ctx.fill();
-  
+
         // Add direction arrow
         ctx.strokeStyle = '#64b5f6';
         ctx.lineWidth = 2;
@@ -747,42 +768,42 @@ const App = () => {
         ctx.moveTo(actualPlanetX, actualPlanetY);
         ctx.lineTo(arrowX, arrowY);
         ctx.stroke();
-  
+
         // Labels
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 12px Inter, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Star', starCenterX, starCenterY + starRadius + 20);
         ctx.fillText('Planet', actualPlanetX, actualPlanetY + planetRadius + 20);
-  
+
         // Show transit indicator
         if (isTransiting) {
           ctx.fillStyle = '#ff4444';
           ctx.font = 'bold 12px Inter, sans-serif';
           ctx.fillText('TRANSIT!', centerX, centerY - starRadius - 20);
         }
-  
+
       }, [animationTime, planetX, planetY, isTransiting, transitDepth, progress]);
-  
+
       // Draw light curve
       useEffect(() => {
         const canvas = lightCurveCanvasRef.current;
         if (!canvas) return;
-  
+
         const ctx = canvas.getContext('2d');
         if(!ctx) return;
         const rect = canvas.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
-  
+
         // Clear canvas
         ctx.fillStyle = '#0f1419';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
         const padding = 30;
         const chartWidth = canvas.width - padding * 2;
         const chartHeight = canvas.height - padding * 2;
-  
+
         // Draw grid
         ctx.strokeStyle = 'rgba(100, 116, 139, 0.3)';
         ctx.lineWidth = 1;
@@ -792,49 +813,49 @@ const App = () => {
           ctx.moveTo(x, padding);
           ctx.lineTo(x, padding + chartHeight);
           ctx.stroke();
-  
+
           const y = padding + (i / 5) * chartHeight;
           ctx.beginPath();
           ctx.moveTo(padding, y);
           ctx.lineTo(padding + chartWidth, y);
           ctx.stroke();
         }
-  
+
         // Generate light curve data
         const numPoints = 200;
         const points = [];
-        
+
         // Define transit parameters
         const transitPhase1 = Math.PI * 0.45;
         const transitPhase2 = Math.PI * 1.55;
         const transitWidth = 0.15;
-        
+
         for (let i = 0; i < numPoints; i++) {
           const time = (i / numPoints) * 2 * Math.PI;
           let brightness = 1.0;
-          
+
           // Create transit dips
           if (Math.abs(time - transitPhase1) < transitWidth) {
             const depth = 0.03;
             const factor = Math.cos((time - transitPhase1) / transitWidth * Math.PI * 0.5);
             brightness -= depth * Math.pow(factor, 2);
           }
-          
+
           if (Math.abs(time - transitPhase2) < transitWidth) {
             const depth = 0.03;
             const factor = Math.cos((time - transitPhase2) / transitWidth * Math.PI * 0.5);
             brightness -= depth * Math.pow(factor, 2);
           }
-          
+
           // Add some noise
           brightness += (Math.random() - 0.5) * 0.005;
-          
+
           points.push({
             x: padding + (i / numPoints) * chartWidth,
             y: padding + (1 - brightness + 0.96) * chartHeight / 0.08
           });
         }
-  
+
         // Draw light curve
         ctx.strokeStyle = '#10b981';
         ctx.lineWidth = 2;
@@ -847,7 +868,7 @@ const App = () => {
           }
         });
         ctx.stroke();
-  
+
         // Draw data points
         ctx.fillStyle = '#10b981';
         points.forEach((point, i) => {
@@ -857,7 +878,7 @@ const App = () => {
             ctx.fill();
           }
         });
-  
+
         // Highlight current position
         const currentIndex = Math.floor((animationTime / animationDuration) * numPoints);
         if (currentIndex < points.length) {
@@ -866,7 +887,7 @@ const App = () => {
           ctx.beginPath();
           ctx.arc(currentPoint.x, currentPoint.y, 4, 0, 2 * Math.PI);
           ctx.fill();
-          
+
           // Vertical line to show current time
           ctx.strokeStyle = 'rgba(255, 107, 53, 0.5)';
           ctx.lineWidth = 2;
@@ -877,34 +898,34 @@ const App = () => {
           ctx.stroke();
           ctx.setLineDash([]);
         }
-  
+
         // Labels
         ctx.fillStyle = '#9ca3af';
         ctx.font = '10px Inter, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Time', canvas.width / 2, canvas.height - 5);
-        
+
         ctx.save();
         ctx.translate(10, canvas.height / 2);
         ctx.rotate(-Math.PI / 2);
         ctx.fillText('Brightness', 0, 0);
         ctx.restore();
-  
+
         // Transit markers
         const transit1X = padding + (transitPhase1 / (2 * Math.PI)) * chartWidth;
         const transit2X = padding + (transitPhase2 / (2 * Math.PI)) * chartWidth;
-        
+
         ctx.fillStyle = 'rgba(255, 68, 68, 0.2)';
         ctx.fillRect(transit1X - 8, padding, 16, chartHeight);
         ctx.fillRect(transit2X - 8, padding, 16, chartHeight);
-  
+
       }, [animationTime, animationDuration]);
-  
+
       const handleReset = () => {
         setAnimationTime(0);
         setIsAnimating(false);
       };
-  
+
       return (
         <div className="space-y-6">
           <div className="grid lg:grid-cols-2 gap-6">
@@ -921,7 +942,7 @@ const App = () => {
                 />
               </div>
             </div>
-  
+
             {/* Light Curve */}
             <div className="space-y-4">
               <h5 className="text-lg font-semibold text-white text-center">
@@ -936,7 +957,7 @@ const App = () => {
               </div>
             </div>
           </div>
-  
+
           {/* Controls */}
           <div className="flex flex-wrap justify-center gap-3">
             <button
@@ -946,7 +967,7 @@ const App = () => {
               {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               {isAnimating ? 'Pause' : 'Play'}
             </button>
-            
+
             <button
               onClick={handleReset}
               className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors text-sm"
@@ -954,7 +975,7 @@ const App = () => {
               <RotateCcw className="w-4 h-4" />
               Reset
             </button>
-            
+
             <div className="flex items-center gap-2">
               <span className="text-gray-300 text-sm">Speed:</span>
               <input
@@ -969,26 +990,26 @@ const App = () => {
               <span className="text-white text-sm">{speed}x</span>
             </div>
           </div>
-  
+
           <div className="text-sm text-gray-300 text-center">
             Watch how the planet's orbit creates the characteristic dips in starlight that astronomers use to detect exoplanets!
           </div>
         </div>
       );
     };
-  
+
     const SimpleExplanation = () => (
       <div className="grid md:grid-cols-2 gap-8 items-center">
         <div>
           <p className="text-gray-300 text-lg leading-relaxed mb-4">
-            When a planet passes between its star and an observer, it blocks a tiny amount of starlight. 
+            When a planet passes between its star and an observer, it blocks a tiny amount of starlight.
             This creates a dip in the star's brightness that we can detect.
           </p>
           <p className="text-gray-300 text-lg leading-relaxed mb-6">
             The size of the dip tells us the planet's size, and the time between dips tells us its orbit.
           </p>
-          <button 
-            onClick={() => setActiveTab('simulation')} 
+          <button
+            onClick={() => setActiveTab('simulation')}
             className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors flex items-center gap-2"
           >
             <Video className="w-5 h-5" />
@@ -999,10 +1020,10 @@ const App = () => {
           <p className="text-sm text-gray-400 text-center mb-2">Star Brightness Over Time</p>
           <div className="relative w-full h-24">
             <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
-              <path 
-                d="M 0 10 H 90 C 95 10, 95 40, 100 40 S 105 10, 110 10 H 200" 
-                stroke="#34D399" 
-                fill="none" 
+              <path
+                d="M 0 10 H 90 C 95 10, 95 40, 100 40 S 105 10, 110 10 H 200"
+                stroke="#34D399"
+                fill="none"
                 strokeWidth="2"
               />
             </svg>
@@ -1013,7 +1034,7 @@ const App = () => {
         </div>
       </div>
     );
-  
+
     const LightCurveTab = () => (
       <div className="space-y-6">
         <div className="grid md:grid-cols-2 gap-6">
@@ -1030,8 +1051,8 @@ const App = () => {
             </ul>
           </div>
           <div className="bg-black rounded-lg p-4">
-            <img 
-              src="https://placehold.co/400x200/1a1a2e/10b981?text=Real+Kepler+Light+Curve" 
+            <img
+              src="https://placehold.co/400x200/1a1a2e/10b981?text=Real+Kepler+Light+Curve"
               alt="Real light curve data"
               className="w-full rounded"
             />
@@ -1042,19 +1063,19 @@ const App = () => {
         </div>
       </div>
     );
-  
+
     return (
       <div className="mt-16 bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-50 p-8 rounded-2xl border border-gray-600">
         <h3 className="text-3xl font-bold mb-6 text-center text-purple-300">The Transit Method</h3>
-        
+
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8">
           <div className="bg-black bg-opacity-40 rounded-lg p-1 flex space-x-1">
             <button
               onClick={() => setActiveTab('explanation')}
               className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
-                activeTab === 'explanation' 
-                  ? 'bg-purple-600 text-white' 
+                activeTab === 'explanation'
+                  ? 'bg-purple-600 text-white'
                   : 'text-gray-300 hover:text-white'
               }`}
             >
@@ -1064,8 +1085,8 @@ const App = () => {
             <button
               onClick={() => setActiveTab('simulation')}
               className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
-                activeTab === 'simulation' 
-                  ? 'bg-purple-600 text-white' 
+                activeTab === 'simulation'
+                  ? 'bg-purple-600 text-white'
                   : 'text-gray-300 hover:text-white'
               }`}
             >
@@ -1075,8 +1096,8 @@ const App = () => {
             <button
               onClick={() => setActiveTab('lightcurve')}
               className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
-                activeTab === 'lightcurve' 
-                  ? 'bg-purple-600 text-white' 
+                activeTab === 'lightcurve'
+                  ? 'bg-purple-600 text-white'
                   : 'text-gray-300 hover:text-white'
               }`}
             >
@@ -1085,7 +1106,7 @@ const App = () => {
             </button>
           </div>
         </div>
-  
+
         {/* Tab Content */}
         <div className="min-h-[400px]">
           {activeTab === 'explanation' && <SimpleExplanation />}
@@ -1203,7 +1224,7 @@ const App = () => {
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {exoplanetTypes.map((type, index) => (
-              <div 
+              <div
                 key={type.name}
                 className={`p-8 rounded-2xl border border-gray-600 cursor-pointer transition-all duration-500 hover:scale-105 ${
                   currentExoplanetType === index ? 'bg-opacity-80 scale-105' : 'bg-opacity-40'
@@ -1274,7 +1295,7 @@ const App = () => {
 
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        
+
         const rect = canvas.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
@@ -1316,20 +1337,20 @@ const App = () => {
                 const endX = xScale(selection.end);
                 ctx.fillRect(startX, padding, endX - startX, chartHeight);
             });
-            
+
             ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
             feedbackData.incorrectSelections.forEach(selection => {
                 const startX = xScale(selection.start);
                 const endX = xScale(selection.end);
                 ctx.fillRect(startX, padding, endX - startX, chartHeight);
             });
-            
+
             ctx.fillStyle = 'rgba(251, 191, 36, 0.4)';
             feedbackData.missedTransits.forEach(transit => {
                 const startX = xScale(transit.start);
                 const endX = xScale(transit.end);
                 ctx.fillRect(startX, padding, endX - startX, chartHeight);
-                
+
                 ctx.strokeStyle = 'rgb(251, 191, 36)';
                 ctx.lineWidth = 2;
                 ctx.setLineDash([5, 5]);
@@ -1358,7 +1379,7 @@ const App = () => {
         ctx.font = '14px Inter, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Time (days)', canvas.width / 2, canvas.height - 20);
-        
+
         ctx.save();
         ctx.translate(20, canvas.height / 2);
         ctx.rotate(-Math.PI / 2);
@@ -1369,13 +1390,13 @@ const App = () => {
 
     const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current || feedbackData) return;
-        
+
         const rect = canvasRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const padding = 60;
         const chartWidth = rect.width - padding * 2;
         const maxTime = Math.max(...lightCurveData.map(d => d.time));
-        
+
         const time = ((x - padding) / chartWidth) * maxTime;
         setDragStart(time);
         setIsDragging(true);
@@ -1383,15 +1404,15 @@ const App = () => {
 
     const handleCanvasMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!isDragging || dragStart === null || !canvasRef.current || feedbackData) return;
-        
+
         const rect = canvasRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const padding = 60;
         const chartWidth = rect.width - padding * 2;
         const maxTime = Math.max(...lightCurveData.map(d => d.time));
-        
+
         const endTime = ((x - padding) / chartWidth) * maxTime;
-        
+
         if (Math.abs(endTime - dragStart) > 0.5) {
             const selection = {
                 start: Math.min(dragStart, endTime),
@@ -1399,7 +1420,7 @@ const App = () => {
             };
             setUserSelections(prev => [...prev, selection]);
         }
-        
+
         setIsDragging(false);
         setDragStart(null);
     };
@@ -1428,27 +1449,27 @@ const App = () => {
         let correctSelections: { start: number; end: number }[] = [];
         let incorrectSelections: { start: number; end: number }[] = [];
         let missedTransits = [...actualTransits];
-        
+
         const maxTime = Math.max(...lightCurveData.map(d => d.time));
         const timePerPoint = maxTime > 0 ? maxTime / lightCurveData.length : 0;
-        
+
         userSelections.forEach(userSel => {
             let matchFound = false;
             let matchedIndex = -1;
-            
+
             actualTransits.forEach((actual, actualIndex) => {
                 if(matchedIndex !== -1) return;
                 const actualStart = actual.start * timePerPoint;
                 const actualEnd = actual.end * timePerPoint;
                 const overlap = Math.max(0, Math.min(userSel.end, actualEnd) - Math.max(userSel.start, actualStart));
                 const userRange = userSel.end - userSel.start;
-                
+
                 if (userRange > 0 && overlap / userRange > 0.3) {
                     matchFound = true;
                     matchedIndex = actualIndex;
                 }
             });
-            
+
             if (matchFound) {
               correctSelections.push(userSel);
               missedTransits = missedTransits.filter((_, index) => index !== matchedIndex);
@@ -1456,7 +1477,7 @@ const App = () => {
               incorrectSelections.push(userSel);
             }
         });
-        
+
         const correctCount = correctSelections.length;
         const newScore = correctCount * 100 - incorrectSelections.length * 50;
         const totalScore = Math.max(0, score + newScore);
@@ -1535,7 +1556,7 @@ const App = () => {
                             <button onClick={() => setActiveTab('task')} className={`pb-2 text-lg font-semibold border-b-2 transition-colors ${activeTab === 'task' ? 'border-blue-500 text-white' : 'border-transparent text-gray-400'}`}>Task</button>
                             <button onClick={() => setActiveTab('tutorial')} className={`pb-2 text-lg font-semibold border-b-2 transition-colors ${activeTab === 'tutorial' ? 'border-blue-500 text-white' : 'border-transparent text-gray-400'}`}>Tutorial</button>
                         </div>
-                        
+
                         {activeTab === 'task' && (
                           <div>
                               <h2 className="text-xl font-semibold text-white mb-4">Do you spot a transit?</h2>
@@ -1578,7 +1599,7 @@ const App = () => {
         </section>
     );
   };
-  
+
   const FieldGuideModal = () => {
     if (!showFieldGuide) return null;
 
@@ -1597,7 +1618,7 @@ const App = () => {
             {children}
         </div>
     );
-    
+
     const GuideSubSection = ({ title, children }: {title: string, children: React.ReactNode}) => (
         <>
             <h4 className="text-lg font-semibold mt-6 mb-2 text-gray-300 border-b border-gray-600 pb-1">{title}</h4>
@@ -1777,7 +1798,7 @@ const App = () => {
           </div>
           <div className="grid md:grid-cols-2 gap-8 mb-16">
             {initiatives.map((initiative) => (
-              <div 
+              <div
                 key={initiative.title}
                 className="group p-8 bg-black bg-opacity-40 backdrop-blur-md rounded-2xl border border-gray-600 hover:border-gray-400 transition-all duration-300 hover:scale-105"
               >
@@ -1787,7 +1808,7 @@ const App = () => {
                 <h3 className="text-2xl font-bold text-white mb-2">{initiative.title}</h3>
                 <p className="text-sm text-gray-400 mb-4">{initiative.organization}</p>
                 <p className="text-gray-300 mb-6 leading-relaxed">{initiative.description}</p>
-                
+
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div>
                     <div className="text-lg font-semibold text-blue-400">{initiative.participants}</div>
@@ -1798,8 +1819,8 @@ const App = () => {
                     <div className="text-sm text-gray-400">Discoveries</div>
                   </div>
                 </div>
-                
-                <a 
+
+                <a
                   href={initiative.link}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -1876,7 +1897,7 @@ const App = () => {
               </button>
             </div>
           </div>
-          
+
           <div>
             <h4 className="text-lg font-semibold mb-4 text-white">Resources</h4>
             <ul className="space-y-2 text-gray-400">
@@ -1886,7 +1907,7 @@ const App = () => {
               <li><a href="https://www.esa.int/Science_Exploration/Space_Science" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ESA Missions</a></li>
             </ul>
           </div>
-          
+
           <div>
             <h4 className="text-lg font-semibold mb-4 text-white">Community</h4>
             <ul className="space-y-2 text-gray-400">
@@ -1896,7 +1917,7 @@ const App = () => {
             </ul>
           </div>
         </div>
-        
+
         <div className="mt-12 pt-8 border-t border-gray-800 text-center">
           <p className="text-gray-400">
             © 2024 Astro Hunters. Educational content inspired by real space missions and citizen science initiatives.
@@ -1934,7 +1955,7 @@ const App = () => {
         {activeSection === 'simulation' && <SimulationSection />}
         {activeSection === 'nasa-explorer' && <NasaExplorerSection />}
         {activeSection === 'citizen-science' && <CitizenScienceSection />}
-        
+
         {activeSection === 'hero' && (
           <>
             <SolarSystemSection />
