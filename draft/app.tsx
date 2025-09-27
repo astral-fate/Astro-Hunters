@@ -21,7 +21,9 @@ import {
   Calendar, 
   Camera, 
   AlertTriangle, 
-  RefreshCw
+  RefreshCw,
+  BarChart3, 
+  Video
 } from 'lucide-react';
 
 // --- TYPE DEFINITIONS (MERGED FROM BOTH FILES) ---
@@ -88,7 +90,6 @@ const App = () => {
   
   const [activeSection, setActiveSection] = useState('hero');
   const [solarSystemAnimation, setSolarSystemAnimation] = useState(false);
-  const [transitSimulationActive, setTransitSimulationActive] = useState(false);
   const [currentExoplanetType, setCurrentExoplanetType] = useState(0);
   const [animationTime, setAnimationTime] = useState(Date.now());
   const [lightCurveData, setLightCurveData] = useState<LightCurvePoint[]>([]);
@@ -208,7 +209,7 @@ const App = () => {
 
   useEffect(() => {
     let animationId: number | undefined;
-    if (solarSystemAnimation || transitSimulationActive) {
+    if (solarSystemAnimation) {
       const animate = () => {
         setAnimationTime(Date.now());
         animationId = requestAnimationFrame(animate);
@@ -218,7 +219,7 @@ const App = () => {
     return () => {
       if (animationId) cancelAnimationFrame(animationId);
     };
-  }, [solarSystemAnimation, transitSimulationActive]);
+  }, [solarSystemAnimation]);
 
   useEffect(() => {
     if (isAnimating) {
@@ -392,51 +393,85 @@ const App = () => {
     </div>
   );
 
-  const MoonPhaseSimulator = () => {
-    const getPhaseInfo = (angle: number) => {
-      const normalizedAngle = (angle - 180 + 360) % 360;
-      if (normalizedAngle >= 355 || normalizedAngle < 5) return { phase: "New Moon", eclipse: "Solar Eclipse Possible!" };
-      if (normalizedAngle < 85) return { phase: "Waxing Crescent", eclipse: "" };
-      if (normalizedAngle < 95) return { phase: "First Quarter", eclipse: "" };
-      if (normalizedAngle < 175) return { phase: "Waxing Gibbous", eclipse: "" };
-      if (normalizedAngle < 185) return { phase: "Full Moon", eclipse: "Lunar Eclipse Possible!" };
-      if (normalizedAngle < 265) return { phase: "Waning Gibbous", eclipse: "" };
-      if (normalizedAngle < 275) return { phase: "Third Quarter", eclipse: "" };
-      return { phase: "Waning Crescent", eclipse: "" };
-    };
-    const phaseInfo = getPhaseInfo(moonPhase);
-    const shadowX = -100 + ((moonPhase - 180 + 360) % 360 / 180) * 200;
-    return (
-      <div className="space-y-6 text-center">
-        <h3 className="text-2xl font-bold mb-4 text-indigo-300">Moon Phases & Eclipses</h3>
-        <p className="text-gray-400 mb-4">Drag the slider to orbit the Moon around Earth and see its phases from our perspective.</p>
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 mb-6">
-          <div className="relative">
-            <p className="absolute text-yellow-300 font-semibold -left-16 top-1/2 -translate-y-1/2">Sunlight</p>
-            <div className="relative border-2 border-dashed border-gray-500 rounded-full w-72 h-72">
-              <div className="absolute bg-blue-500 rounded-full w-16 h-16 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-              <div className="absolute w-5 h-5 bg-gray-300 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                style={{ transformOrigin: '-128px center', transform: `rotate(${moonPhase}deg)` }} />
-            </div>
-          </div>
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">View from Earth</h3>
-            <div className="relative bg-gray-300 rounded-full border-2 border-white mx-auto overflow-hidden w-24 h-24">
-              <div className="absolute top-0 bg-gray-800 rounded-full transition-transform duration-300 w-24 h-24"
-                style={{ transform: `translateX(${shadowX}px)` }} />
-            </div>
-            <p className="mt-2 text-xl font-bold">{phaseInfo.phase}</p>
-            {phaseInfo.eclipse && <p className="mt-2 text-lg font-semibold text-yellow-400">{phaseInfo.eclipse}</p>}
+const MoonPhaseSimulator = () => {
+  const getPhaseInfo = (angle: number) => {
+    const normalizedAngle = (angle - 180 + 360) % 360;
+    if (normalizedAngle >= 355 || normalizedAngle < 5) return { phase: "New Moon", eclipse: "Solar Eclipse Possible!" };
+    if (normalizedAngle < 85) return { phase: "Waxing Crescent", eclipse: "" };
+    if (normalizedAngle < 95) return { phase: "First Quarter", eclipse: "" };
+    if (normalizedAngle < 175) return { phase: "Waxing Gibbous", eclipse: "" };
+    if (normalizedAngle < 185) return { phase: "Full Moon", eclipse: "Lunar Eclipse Possible!" };
+    if (normalizedAngle < 265) return { phase: "Waning Gibbous", eclipse: "" };
+    if (normalizedAngle < 275) return { phase: "Third Quarter", eclipse: "" };
+    return { phase: "Waning Crescent", eclipse: "" };
+  };
+
+  const handleAnimationToggle = useCallback(() => {
+    setIsAnimating(prev => !prev);
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setMoonPhase(180);
+    setIsAnimating(false);
+  }, []);
+
+  const phaseInfo = getPhaseInfo(moonPhase);
+  const shadowX = -100 + ((moonPhase - 180 + 360) % 360 / 180) * 200;
+  
+  return (
+    <div className="space-y-6 text-center">
+      <h3 className="text-2xl font-bold mb-4 text-indigo-300">Moon Phases & Eclipses</h3>
+      <p className="text-gray-400 mb-4">Drag the slider to orbit the Moon around Earth and see its phases from our perspective.</p>
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-8 mb-6">
+        <div className="relative">
+          <p className="absolute text-yellow-300 font-semibold -left-16 top-1/2 -translate-y-1/2">Sunlight</p>
+          <div className="relative border-2 border-dashed border-gray-500 rounded-full w-72 h-72">
+            <div className="absolute bg-blue-500 rounded-full w-16 h-16 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute w-5 h-5 bg-gray-300 rounded-full"
+              style={{ 
+                top: '50%', 
+                left: '50%',
+                transform: `translate(-50%, -50%) rotate(${moonPhase}deg) translateX(136px) translate(-50%, -50%)`
+              }} />
           </div>
         </div>
-        <input type="range" min="0" max="360" value={moonPhase} onChange={(e) => setMoonPhase(parseInt(e.target.value))} className="w-1/2 mx-auto" />
-        <div className="flex justify-center gap-4 mt-4">
-          <button onClick={() => setIsAnimating(!isAnimating)} className="flex items-center gap-2 px-4 py-2 bg-purple-500 rounded-full"><Play className="w-4 h-4" />{isAnimating ? 'Pause' : 'Play'}</button>
-          <button onClick={() => setMoonPhase(180)} className="flex items-center gap-2 px-4 py-2 bg-gray-700 rounded-full"><RotateCcw className="w-4 h-4" />Reset</button>
+        <div className="text-center">
+          <h3 className="text-lg font-semibold mb-2">View from Earth</h3>
+          <div className="relative bg-gray-300 rounded-full border-2 border-white mx-auto overflow-hidden w-24 h-24">
+            <div className="absolute top-0 bg-gray-800 rounded-full transition-transform duration-300 w-24 h-24"
+              style={{ transform: `translateX(${shadowX}px)` }} />
+          </div>
+          <p className="mt-2 text-xl font-bold">{phaseInfo.phase}</p>
+          {phaseInfo.eclipse && <p className="mt-2 text-lg font-semibold text-yellow-400">{phaseInfo.eclipse}</p>}
         </div>
       </div>
-    );
-  };
+      <input 
+        type="range" 
+        min="0" 
+        max="360" 
+        value={moonPhase} 
+        onChange={(e) => setMoonPhase(parseInt(e.target.value))} 
+        className="w-1/2 mx-auto" 
+      />
+      <div className="flex justify-center gap-4 mt-4">
+        <button 
+          onClick={handleAnimationToggle} 
+          className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-full transition-colors"
+        >
+          {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          {isAnimating ? 'Pause' : 'Play'}
+        </button>
+        <button 
+          onClick={handleReset} 
+          className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Reset
+        </button>
+      </div>
+    </div>
+  );
+};
 
   const FeedbackModal = () => {
     const modalChartRef = useRef<HTMLCanvasElement>(null);
@@ -563,6 +598,493 @@ const App = () => {
     );
   };
 
+  // --- NEW TRANSIT SECTION ---
+  const EnhancedTransitSection = () => {
+    const [activeTab, setActiveTab] = useState('explanation');
+    
+    const TransitAnimation = () => {
+      const [isAnimating, setIsAnimating] = useState(false);
+      const [animationTime, setAnimationTime] = useState(0);
+      const [speed, setSpeed] = useState(1);
+      const canvasRef = useRef<HTMLCanvasElement>(null);
+      const lightCurveCanvasRef = useRef<HTMLCanvasElement>(null);
+      const animationFrameRef = useRef<number | null>(null);
+  
+      // Animation parameters
+      const orbitRadius = 150;
+      const starRadius = 45;
+      const planetRadius = 10;
+      const animationDuration = 8000;
+  
+      useEffect(() => {
+        if (isAnimating) {
+          const animate = () => {
+            setAnimationTime(prev => (prev + (16 * speed)) % animationDuration);
+            animationFrameRef.current = requestAnimationFrame(animate);
+          };
+          animationFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+          }
+        }
+  
+        return () => {
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+          }
+        };
+      }, [isAnimating, speed]);
+  
+      const progress = (animationTime / animationDuration) * 2 * Math.PI;
+      const planetX = Math.cos(progress) * orbitRadius;
+      const planetY = Math.sin(progress) * orbitRadius * 0.3;
+      const isTransiting = Math.abs(planetX) < starRadius + planetRadius && planetY > -10;
+      const transitDepth = isTransiting ? Math.max(0, 1 - Math.abs(planetX) / (starRadius + planetRadius)) : 0;
+  
+      // Draw main animation
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+  
+        const ctx = canvas.getContext('2d');
+        if(!ctx) return;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+  
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+  
+        // Clear canvas
+        ctx.fillStyle = '#0a0a1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+        // Add stars background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        for (let i = 0; i < 50; i++) {
+          const x = (i * 137.5) % canvas.width;
+          const y = (i * 197.3) % canvas.height;
+          ctx.beginPath();
+          ctx.arc(x, y, Math.random() * 1 + 0.5, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+  
+        // Draw orbit path
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY, orbitRadius, orbitRadius * 0.3, 0, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.setLineDash([]);
+  
+        // Draw star with glow effect
+        const starCenterX = centerX;
+        const starCenterY = centerY;
+        
+        // Star glow
+        const gradient = ctx.createRadialGradient(starCenterX, starCenterY, 0, starCenterX, starCenterY, starRadius * 1.5);
+        gradient.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
+        gradient.addColorStop(0.4, 'rgba(255, 165, 0, 0.6)');
+        gradient.addColorStop(1, 'rgba(255, 140, 0, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(starCenterX, starCenterY, starRadius * 1.5, 0, 2 * Math.PI);
+        ctx.fill();
+  
+        // Star body
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(starCenterX, starCenterY, starRadius, 0, 2 * Math.PI);
+        ctx.fill();
+  
+        // Calculate planet position
+        const actualPlanetX = centerX + planetX;
+        const actualPlanetY = centerY + planetY;
+        const planetZ = Math.sin(progress) * orbitRadius;
+  
+        // Draw planet shadow on star during transit
+        if (isTransiting && planetZ < 0) {
+          const shadowOpacity = transitDepth * 0.6;
+          ctx.fillStyle = `rgba(0, 0, 0, ${shadowOpacity})`;
+          ctx.beginPath();
+          ctx.arc(actualPlanetX, actualPlanetY, planetRadius * 1.1, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+  
+        // Draw planet
+        const planetGradient = ctx.createRadialGradient(
+          actualPlanetX - 3, actualPlanetY - 3, 0,
+          actualPlanetX, actualPlanetY, planetRadius
+        );
+        planetGradient.addColorStop(0, '#4fc3f7');
+        planetGradient.addColorStop(0.6, '#1976d2');
+        planetGradient.addColorStop(1, '#0d47a1');
+        
+        ctx.fillStyle = planetGradient;
+        ctx.beginPath();
+        ctx.arc(actualPlanetX, actualPlanetY, planetRadius, 0, 2 * Math.PI);
+        ctx.fill();
+  
+        // Add direction arrow
+        ctx.strokeStyle = '#64b5f6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const arrowX = actualPlanetX + Math.cos(progress + Math.PI/2) * 20;
+        const arrowY = actualPlanetY + Math.sin(progress + Math.PI/2) * 20 * 0.3;
+        ctx.moveTo(actualPlanetX, actualPlanetY);
+        ctx.lineTo(arrowX, arrowY);
+        ctx.stroke();
+  
+        // Labels
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Star', starCenterX, starCenterY + starRadius + 20);
+        ctx.fillText('Planet', actualPlanetX, actualPlanetY + planetRadius + 20);
+  
+        // Show transit indicator
+        if (isTransiting) {
+          ctx.fillStyle = '#ff4444';
+          ctx.font = 'bold 12px Inter, sans-serif';
+          ctx.fillText('TRANSIT!', centerX, centerY - starRadius - 20);
+        }
+  
+      }, [animationTime, planetX, planetY, isTransiting, transitDepth, progress]);
+  
+      // Draw light curve
+      useEffect(() => {
+        const canvas = lightCurveCanvasRef.current;
+        if (!canvas) return;
+  
+        const ctx = canvas.getContext('2d');
+        if(!ctx) return;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+  
+        // Clear canvas
+        ctx.fillStyle = '#0f1419';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+        const padding = 30;
+        const chartWidth = canvas.width - padding * 2;
+        const chartHeight = canvas.height - padding * 2;
+  
+        // Draw grid
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.3)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 5; i++) {
+          const x = padding + (i / 5) * chartWidth;
+          ctx.beginPath();
+          ctx.moveTo(x, padding);
+          ctx.lineTo(x, padding + chartHeight);
+          ctx.stroke();
+  
+          const y = padding + (i / 5) * chartHeight;
+          ctx.beginPath();
+          ctx.moveTo(padding, y);
+          ctx.lineTo(padding + chartWidth, y);
+          ctx.stroke();
+        }
+  
+        // Generate light curve data
+        const numPoints = 200;
+        const points = [];
+        
+        // Define transit parameters
+        const transitPhase1 = Math.PI * 0.45;
+        const transitPhase2 = Math.PI * 1.55;
+        const transitWidth = 0.15;
+        
+        for (let i = 0; i < numPoints; i++) {
+          const time = (i / numPoints) * 2 * Math.PI;
+          let brightness = 1.0;
+          
+          // Create transit dips
+          if (Math.abs(time - transitPhase1) < transitWidth) {
+            const depth = 0.03;
+            const factor = Math.cos((time - transitPhase1) / transitWidth * Math.PI * 0.5);
+            brightness -= depth * Math.pow(factor, 2);
+          }
+          
+          if (Math.abs(time - transitPhase2) < transitWidth) {
+            const depth = 0.03;
+            const factor = Math.cos((time - transitPhase2) / transitWidth * Math.PI * 0.5);
+            brightness -= depth * Math.pow(factor, 2);
+          }
+          
+          // Add some noise
+          brightness += (Math.random() - 0.5) * 0.005;
+          
+          points.push({
+            x: padding + (i / numPoints) * chartWidth,
+            y: padding + (1 - brightness + 0.96) * chartHeight / 0.08
+          });
+        }
+  
+        // Draw light curve
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        points.forEach((point, i) => {
+          if (i === 0) {
+            ctx.moveTo(point.x, point.y);
+          } else {
+            ctx.lineTo(point.x, point.y);
+          }
+        });
+        ctx.stroke();
+  
+        // Draw data points
+        ctx.fillStyle = '#10b981';
+        points.forEach((point, i) => {
+          if (i % 8 === 0) {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 1.5, 0, 2 * Math.PI);
+            ctx.fill();
+          }
+        });
+  
+        // Highlight current position
+        const currentIndex = Math.floor((animationTime / animationDuration) * numPoints);
+        if (currentIndex < points.length) {
+          const currentPoint = points[currentIndex];
+          ctx.fillStyle = '#ff6b35';
+          ctx.beginPath();
+          ctx.arc(currentPoint.x, currentPoint.y, 4, 0, 2 * Math.PI);
+          ctx.fill();
+          
+          // Vertical line to show current time
+          ctx.strokeStyle = 'rgba(255, 107, 53, 0.5)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(currentPoint.x, padding);
+          ctx.lineTo(currentPoint.x, padding + chartHeight);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+  
+        // Labels
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Time', canvas.width / 2, canvas.height - 5);
+        
+        ctx.save();
+        ctx.translate(10, canvas.height / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Brightness', 0, 0);
+        ctx.restore();
+  
+        // Transit markers
+        const transit1X = padding + (transitPhase1 / (2 * Math.PI)) * chartWidth;
+        const transit2X = padding + (transitPhase2 / (2 * Math.PI)) * chartWidth;
+        
+        ctx.fillStyle = 'rgba(255, 68, 68, 0.2)';
+        ctx.fillRect(transit1X - 8, padding, 16, chartHeight);
+        ctx.fillRect(transit2X - 8, padding, 16, chartHeight);
+  
+      }, [animationTime, animationDuration]);
+  
+      const handleReset = () => {
+        setAnimationTime(0);
+        setIsAnimating(false);
+      };
+  
+      return (
+        <div className="space-y-6">
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Main Animation */}
+            <div className="space-y-4">
+              <h5 className="text-lg font-semibold text-white text-center">
+                Planet Orbit View
+              </h5>
+              <div className="relative bg-black rounded-xl overflow-hidden">
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-64"
+                  style={{ maxWidth: '100%' }}
+                />
+              </div>
+            </div>
+  
+            {/* Light Curve */}
+            <div className="space-y-4">
+              <h5 className="text-lg font-semibold text-white text-center">
+                Brightness Measurement
+              </h5>
+              <div className="relative bg-black rounded-xl overflow-hidden">
+                <canvas
+                  ref={lightCurveCanvasRef}
+                  className="w-full h-64"
+                  style={{ maxWidth: '100%' }}
+                />
+              </div>
+            </div>
+          </div>
+  
+          {/* Controls */}
+          <div className="flex flex-wrap justify-center gap-3">
+            <button
+              onClick={() => setIsAnimating(!isAnimating)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-sm"
+            >
+              {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              {isAnimating ? 'Pause' : 'Play'}
+            </button>
+            
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors text-sm"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Reset
+            </button>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-gray-300 text-sm">Speed:</span>
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.5"
+                value={speed}
+                onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                className="w-20"
+              />
+              <span className="text-white text-sm">{speed}x</span>
+            </div>
+          </div>
+  
+          <div className="text-sm text-gray-300 text-center">
+            Watch how the planet's orbit creates the characteristic dips in starlight that astronomers use to detect exoplanets!
+          </div>
+        </div>
+      );
+    };
+  
+    const SimpleExplanation = () => (
+      <div className="grid md:grid-cols-2 gap-8 items-center">
+        <div>
+          <p className="text-gray-300 text-lg leading-relaxed mb-4">
+            When a planet passes between its star and an observer, it blocks a tiny amount of starlight. 
+            This creates a dip in the star's brightness that we can detect.
+          </p>
+          <p className="text-gray-300 text-lg leading-relaxed mb-6">
+            The size of the dip tells us the planet's size, and the time between dips tells us its orbit.
+          </p>
+          <button 
+            onClick={() => setActiveTab('simulation')} 
+            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Video className="w-5 h-5" />
+            See Animation
+          </button>
+        </div>
+        <div className="relative h-48 bg-black/50 rounded-xl overflow-hidden p-4">
+          <p className="text-sm text-gray-400 text-center mb-2">Star Brightness Over Time</p>
+          <div className="relative w-full h-24">
+            <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+              <path 
+                d="M 0 10 H 90 C 95 10, 95 40, 100 40 S 105 10, 110 10 H 200" 
+                stroke="#34D399" 
+                fill="none" 
+                strokeWidth="2"
+              />
+            </svg>
+          </div>
+          <p className="text-xs text-gray-400 text-center mt-2">
+            The U-shaped dip indicates a planet transit
+          </p>
+        </div>
+      </div>
+    );
+  
+    const LightCurveTab = () => (
+      <div className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-xl font-semibold text-white mb-4">What Scientists See</h4>
+            <p className="text-gray-300 mb-4">
+              Astronomers don't see the planet directly. Instead, they measure tiny changes in starlight over time.
+            </p>
+            <ul className="space-y-2 text-gray-300 text-sm">
+              <li>• Transit dips are typically 0.01% - 1% of star brightness</li>
+              <li>• The shape is U-shaped, not V-shaped</li>
+              <li>• Duration depends on planet size and orbital speed</li>
+              <li>• Multiple transits confirm it's a real planet</li>
+            </ul>
+          </div>
+          <div className="bg-black rounded-lg p-4">
+            <img 
+              src="https://placehold.co/400x200/1a1a2e/10b981?text=Real+Kepler+Light+Curve" 
+              alt="Real light curve data"
+              className="w-full rounded"
+            />
+            <p className="text-xs text-gray-400 mt-2 text-center">
+              Real data from NASA's Kepler Space Telescope
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  
+    return (
+      <div className="mt-16 bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-50 p-8 rounded-2xl border border-gray-600">
+        <h3 className="text-3xl font-bold mb-6 text-center text-purple-300">The Transit Method</h3>
+        
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-black bg-opacity-40 rounded-lg p-1 flex space-x-1">
+            <button
+              onClick={() => setActiveTab('explanation')}
+              className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
+                activeTab === 'explanation' 
+                  ? 'bg-purple-600 text-white' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <Eye className="w-4 h-4" />
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('simulation')}
+              className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
+                activeTab === 'simulation' 
+                  ? 'bg-purple-600 text-white' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <Video className="w-4 h-4" />
+              Animation
+            </button>
+            <button
+              onClick={() => setActiveTab('lightcurve')}
+              className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
+                activeTab === 'lightcurve' 
+                  ? 'bg-purple-600 text-white' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              Data Analysis
+            </button>
+          </div>
+        </div>
+  
+        {/* Tab Content */}
+        <div className="min-h-[400px]">
+          {activeTab === 'explanation' && <SimpleExplanation />}
+          {activeTab === 'simulation' && <TransitAnimation />}
+          {activeTab === 'lightcurve' && <LightCurveTab />}
+        </div>
+      </div>
+    );
+  };
+
   const HeroSection = () => (
     <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4">
       <div className="z-10 max-w-4xl mx-auto">
@@ -610,29 +1132,8 @@ const App = () => {
             </div>
           ))}
         </div>
-        <div className="mt-16 bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-50 p-8 rounded-2xl border border-gray-600">
-          <h3 className="text-3xl font-bold mb-6 text-center text-purple-300">The Transit Method</h3>
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-              <p className="text-gray-300 text-lg leading-relaxed">When a planet passes between its star and an observer, it blocks a tiny amount of starlight. This creates a dip in the star's brightness that we can detect. The size of the dip tells us the planet's size, and the time between dips tells us its orbit.</p>
-            </div>
-            <div className="relative h-48 bg-black/50 rounded-xl overflow-hidden p-4">
-                 <p className="text-sm text-gray-400 text-center mb-2">Star Brightness</p>
-                 <div className="relative w-full h-24">
-                    <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
-                        <path d={ transitSimulationActive && (Date.now() / 8000 * 2 * Math.PI) % (2*Math.PI) > Math.PI - 0.5 && (Date.now() / 8000 * 2 * Math.PI) % (2*Math.PI) < Math.PI + 0.5 ? "M 0 10 H 90 C 95 10, 95 40, 100 40 S 105 10, 110 10 H 200" : "M 0 10 H 200" } stroke="#34D399" fill="none" strokeWidth="2" style={{transition: 'd 0.3s ease-in-out'}}/>
-                    </svg>
-                 </div>
-                 <div className="absolute w-12 h-12 bg-yellow-400 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-                 <div className="absolute w-3 h-3 bg-blue-500 rounded-full top-1/2 -translate-y-1/2" style={{animation: transitSimulationActive ? 'transitOrbit 8s linear infinite' : 'none'}}></div>
-            </div>
-          </div>
-          <div className="text-center mt-6">
-            <button onClick={() => setTransitSimulationActive(!transitSimulationActive)} className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-full transition-colors flex items-center gap-2 mx-auto">
-              <Eye className="w-5 h-5" />{transitSimulationActive ? 'Stop Simulation' : 'Watch Transit'}
-            </button>
-          </div>
-        </div>
+
+        <EnhancedTransitSection />
       </div>
     </section>
   );
@@ -1415,16 +1916,6 @@ const App = () => {
       <APIDebugPanel />
       <FeedbackModal />
       <FieldGuideModal />
-
-      <style>{`
-        @keyframes transitOrbit {
-          0% { left: -5%; }
-          45% { left: 48%; z-index: 1; }
-          50% { left: 50%; z-index: -1; }
-          55% { left: 52%; z-index: -1; }
-          100% { left: 105%; }
-        }
-      `}</style>
 
       <main className="relative z-10 pt-16">
         {activeSection === 'hero' && <HeroSection />}
