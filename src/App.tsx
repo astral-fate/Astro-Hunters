@@ -1,4 +1,3 @@
- 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import {
@@ -24,7 +23,9 @@ import {
   AlertTriangle,
   RefreshCw,
   BarChart3,
-  Video
+  Video,
+  Menu,
+  X
 } from 'lucide-react';
 
 // --- TYPE DEFINITIONS (MERGED FROM BOTH FILES) ---
@@ -317,8 +318,8 @@ const App = () => {
       return '🔴';
     };
     return (
-      <div className="fixed top-20 right-4 bg-black bg-opacity-75 text-white p-4 rounded-lg text-xs z-50 max-w-sm">
-        <h4 className="font-bold mb-2">API Status</h4>
+      <div className="fixed top-20 right-2 bg-black bg-opacity-75 text-white p-3 rounded-lg text-xs z-50 max-w-xs sm:max-w-sm">
+        <h4 className="font-bold mb-2 text-sm">API Status</h4>
         <div className="space-y-1">
           <div><span>APOD:</span><span className="float-right">{getStatusIcon(loading.apod, apodData, apiErrors.apod)}</span></div>
           <div><span>Mars Photos:</span><span className="float-right">{getStatusIcon(loading.mars, marsPhotos, apiErrors.mars)}</span></div>
@@ -343,7 +344,7 @@ const App = () => {
 
   const Modal = ({ onClose, children }: { onClose: () => void; children: ReactNode }) => (
     <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="relative p-8 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white border-opacity-20 bg-gray-900 bg-opacity-95">
+      <div className="relative p-6 sm:p-8 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white border-opacity-20 bg-gray-900 bg-opacity-95">
         <button onClick={onClose} className="absolute top-4 right-5 text-white text-2xl cursor-pointer hover:rotate-90 transition-transform duration-200 z-10">×</button>
         {children}
       </div>
@@ -351,15 +352,18 @@ const App = () => {
   );
 
   const TimeMachine = () => (
-    <div className="bg-black bg-opacity-50 backdrop-blur-md p-8 rounded-2xl border border-gray-700 mb-8">
-      <div className="flex items-center gap-4 mb-6"><Calendar className="w-8 h-8 text-purple-400" /><h3 className="text-3xl font-bold text-purple-300">Cosmic Time Machine</h3></div>
+    <div className="bg-black bg-opacity-50 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-gray-700 mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+        <Calendar className="w-8 h-8 text-purple-400" />
+        <h3 className="text-2xl sm:text-3xl font-bold text-purple-300">Cosmic Time Machine</h3>
+      </div>
       <p className="text-gray-300 mb-6 max-w-3xl">Using NASA's Astronomy Picture of the Day (APOD) API, we can view a real image or video from space for any day since June 16, 1995.</p>
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Travel to any date</label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} max={new Date().toISOString().split('T')[0]} min="1995-06-16" className="flex-1 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white" />
-            <button onClick={() => fetchAPOD(selectedDate)} disabled={!!loading.apod} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg">{loading.apod ? <RefreshCw className="w-5 h-5 animate-spin" /> : 'Go'}</button>
+            <button onClick={() => fetchAPOD(selectedDate)} disabled={!!loading.apod} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center justify-center">{loading.apod ? <RefreshCw className="w-5 h-5 animate-spin" /> : 'Go'}</button>
           </div>
           {apiErrors.apod && <p className="text-red-400 text-sm mt-2">{String(apiErrors.apod)}</p>}
         </div>
@@ -388,7 +392,7 @@ const App = () => {
 
   const NearEarthObjects = () => (
     <div className="bg-black bg-opacity-50 backdrop-blur-md p-6 rounded-2xl border border-gray-700">
-      <div className="flex items-center gap-4 mb-6"><AlertTriangle className="w-8 h-8 text-yellow-400" /><h3 className="text-2xl font-bold text-yellow-300">Near Earth Objects</h3><button onClick={fetchNEO} disabled={!!loading.neo} className="ml-auto px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg">{loading.neo ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Update'}</button></div>
+      <div className="flex items-center gap-4 mb-6"><AlertTriangle className="w-8 h-8 text-yellow-400" /><h3 className="text-xl sm:text-2xl font-bold text-yellow-300">Near Earth Objects</h3><button onClick={fetchNEO} disabled={!!loading.neo} className="ml-auto px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg text-sm">{loading.neo ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Update'}</button></div>
       <p className="text-gray-300 mb-6 max-w-3xl">Tracking asteroids and comets that will have a close approach to Earth. This data is updated daily.</p>
       <ApiContentHandler loading={!!loading.neo} error={apiErrors.neo as string} data={nearEarthObjects} onRetry={fetchNEO} loadingText="Tracking asteroids..." emptyText="No significant objects tracked for today.">
         {(data) => ( <div className="space-y-3">{data.map((neo: any) => ( <div key={neo.id} className="bg-yellow-900 bg-opacity-30 p-3 rounded-lg"><div className="flex justify-between items-start"><div><h4 className="font-bold text-white">{neo.name}</h4><p className={`text-sm font-bold ${neo.is_potentially_hazardous_asteroid ? 'text-red-400' : 'text-green-400'}`}>{neo.is_potentially_hazardous_asteroid ? 'Potentially Hazardous' : 'Not Hazardous'}</p></div></div></div> ))}</div> )}
@@ -398,7 +402,7 @@ const App = () => {
 
   const LiveEarthEvents = () => (
     <div className="space-y-6">
-      <div className="flex items-center gap-4 mb-6"><Globe className="w-8 h-8 text-blue-400" /><h3 className="text-3xl font-bold text-blue-300">Live Earth Events</h3><button onClick={fetchEarthEvents} disabled={!!loading.earth} className="ml-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">{loading.earth ? <RefreshCw className="w-5 h-5 animate-spin" /> : 'Refresh'}</button></div>
+      <div className="flex items-center gap-4 mb-6"><Globe className="w-8 h-8 text-blue-400" /><h3 className="text-2xl sm:text-3xl font-bold text-blue-300">Live Earth Events</h3><button onClick={fetchEarthEvents} disabled={!!loading.earth} className="ml-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">{loading.earth ? <RefreshCw className="w-5 h-5 animate-spin" /> : 'Refresh'}</button></div>
       <ApiContentHandler loading={!!loading.earth} error={apiErrors.earth as string} data={earthEvents} onRetry={fetchEarthEvents} loadingText="Scanning the globe..." emptyText="No current major natural events found.">
         {(data) => ( <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">{data.map((event: any) => ( <div key={event.id} className="bg-gradient-to-r from-blue-900 to-green-900 p-4 rounded-xl border border-white/20"><div className="flex items-start gap-3"><div className="text-2xl">{event.categories[0]?.title.includes('Wildfires') ? '🔥' : event.categories[0]?.title.includes('Severe Storms') ? '⛈️' : event.categories[0]?.title.includes('Volcanoes') ? '🌋' : '🌍'}</div><div className="flex-1"><h4 className="font-bold text-white">{event.title}</h4></div></div></div> ))}</div> )}
       </ApiContentHandler>
@@ -407,9 +411,9 @@ const App = () => {
 
   const MarsRoverPhotos = () => (
     <div className="space-y-6">
-      <div className="flex items-center gap-4 mb-6"><Camera className="w-8 h-8 text-red-400" /><h3 className="text-3xl font-bold text-red-300">Live from Mars</h3><button onClick={fetchMarsRoverPhotos} disabled={!!loading.mars} className="ml-auto px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg">{loading.mars ? <RefreshCw className="w-5 h-5 animate-spin" /> : 'Get Latest Photos'}</button></div>
+      <div className="flex items-center gap-4 mb-6"><Camera className="w-8 h-8 text-red-400" /><h3 className="text-2xl sm:text-3xl font-bold text-red-300">Live from Mars</h3><button onClick={fetchMarsRoverPhotos} disabled={!!loading.mars} className="ml-auto px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm">{loading.mars ? <RefreshCw className="w-5 h-5 animate-spin" /> : 'Get Latest'}</button></div>
       <ApiContentHandler loading={!!loading.mars} error={apiErrors.mars as string} data={marsPhotos} onRetry={fetchMarsRoverPhotos} loadingText="Contacting Curiosity Rover..." emptyText="No recent photos found.">
-        {(data) => ( <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-96 overflow-y-auto">{data.map((photo: MarsPhoto) => ( <div key={photo.id} className="bg-gray-800 rounded-lg overflow-hidden"><img src={photo.img_src.replace('http://', 'https://')} alt={`Mars by ${photo.camera.name}`} className="w-full h-32 object-cover" /><div className="p-2"><p className="text-xs text-gray-300">{photo.camera.full_name}</p><p className="text-xs text-gray-500">{new Date(photo.earth_date).toLocaleDateString()}</p></div></div> ))}</div> )}
+        {(data) => ( <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto pr-2">{data.map((photo: MarsPhoto) => ( <div key={photo.id} className="bg-gray-800 rounded-lg overflow-hidden"><img src={photo.img_src.replace('http://', 'https://')} alt={`Mars by ${photo.camera.name}`} className="w-full h-32 object-cover" /><div className="p-2"><p className="text-xs text-gray-300 truncate">{photo.camera.full_name}</p><p className="text-xs text-gray-500">{new Date(photo.earth_date).toLocaleDateString()}</p></div></div> ))}</div> )}
       </ApiContentHandler>
     </div>
   );
@@ -432,18 +436,18 @@ const App = () => {
     e.preventDefault();
     e.stopPropagation();
     setIsAnimating(prev => !prev);
-  }, [setIsAnimating]);
+  }, []);
 
   const handleReset = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setMoonPhase(180);
     setIsAnimating(false);
-  }, [setMoonPhase, setIsAnimating]);
+  }, []);
 
   const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setMoonPhase(parseInt(e.target.value));
-  }, [setMoonPhase]);
+  }, []);
 
   const phaseInfo = getPhaseInfo(moonPhase);
   const shadowX = -100 + ((moonPhase - 180 + 360) % 360 / 180) * 200;
@@ -451,17 +455,17 @@ const App = () => {
   return (
     <div className="space-y-6 text-center">
       <h3 className="text-2xl font-bold mb-4 text-indigo-300">Moon Phases & Eclipses</h3>
-      <p className="text-gray-400 mb-4">Drag the slider to orbit the Moon around Earth and see its phases from our perspective.</p>
+      <p className="text-gray-400 mb-4 max-w-md mx-auto">Drag the slider to orbit the Moon around Earth and see its phases from our perspective.</p>
       <div className="flex flex-col lg:flex-row items-center justify-center gap-8 mb-6">
         <div className="relative">
-          <p className="absolute text-yellow-300 font-semibold -left-16 top-1/2 -translate-y-1/2">Sunlight</p>
-          <div className="relative border-2 border-dashed border-gray-500 rounded-full w-72 h-72">
-            <div className="absolute bg-blue-500 rounded-full w-16 h-16 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute w-5 h-5 bg-gray-300 rounded-full"
+          <p className="absolute text-yellow-300 font-semibold -left-16 top-1/2 -translate-y-1/2 hidden sm:block">Sunlight</p>
+          <div className="relative border-2 border-dashed border-gray-500 rounded-full w-64 h-64 sm:w-72 sm:h-72">
+            <div className="absolute bg-blue-500 rounded-full w-14 h-14 sm:w-16 sm:h-16 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute w-4 h-4 sm:w-5 sm:h-5 bg-gray-300 rounded-full"
               style={{
                 top: '50%',
                 left: '50%',
-                transform: `translate(-50%, -50%) rotate(${moonPhase}deg) translateX(136px) translate(-50%, -50%)`
+                transform: `translate(-50%, -50%) rotate(${moonPhase}deg) translateX(120px) sm:translateX(136px)`
               }} />
           </div>
         </div>
@@ -481,7 +485,7 @@ const App = () => {
         max="360"
         value={moonPhase}
         onChange={handleSliderChange}
-        className="w-1/2 mx-auto"
+        className="w-full max-w-xs mx-auto"
       />
       <div className="flex justify-center gap-4 mt-4">
         <button
@@ -575,7 +579,7 @@ const App = () => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="relative p-8 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white border-opacity-20 text-center bg-gray-900 bg-opacity-95">
+            <div className="relative p-6 sm:p-8 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white border-opacity-20 text-center bg-gray-900 bg-opacity-95">
                 <button
                     onClick={() => {
                       setShowFeedbackModal(false);
@@ -596,13 +600,13 @@ const App = () => {
                     )}
                 </div>
 
-                <h2 className={`text-3xl font-bold mb-4 ${
+                <h2 className={`text-2xl sm:text-3xl font-bold mb-4 ${
                     feedbackData.isSuccess ? 'text-green-400' : 'text-red-400'
                 }`}>
                     {feedbackData.title}
                 </h2>
 
-                <p className="text-gray-300 mb-6 text-lg leading-relaxed">
+                <p className="text-gray-300 mb-6 text-base sm:text-lg leading-relaxed">
                     {feedbackData.message}
                 </p>
 
@@ -613,13 +617,13 @@ const App = () => {
                     />
                 </div>
 
-                <div className="flex gap-4 justify-center">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button
                         onClick={() => {
                             setShowFeedbackModal(false);
                             setFeedbackData(null);
                         }}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
                     >
                         <Star className="w-5 h-5" />
                         Continue Analysis
@@ -934,11 +938,10 @@ const App = () => {
               <h5 className="text-lg font-semibold text-white text-center">
                 Planet Orbit View
               </h5>
-              <div className="relative bg-black rounded-xl overflow-hidden">
+              <div className="relative bg-black rounded-xl overflow-hidden aspect-video lg:aspect-auto lg:h-64">
                 <canvas
                   ref={canvasRef}
-                  className="w-full h-64"
-                  style={{ maxWidth: '100%' }}
+                  className="w-full h-full"
                 />
               </div>
             </div>
@@ -948,18 +951,17 @@ const App = () => {
               <h5 className="text-lg font-semibold text-white text-center">
                 Brightness Measurement
               </h5>
-              <div className="relative bg-black rounded-xl overflow-hidden">
+              <div className="relative bg-black rounded-xl overflow-hidden aspect-video lg:aspect-auto lg:h-64">
                 <canvas
                   ref={lightCurveCanvasRef}
-                  className="w-full h-64"
-                  style={{ maxWidth: '100%' }}
+                  className="w-full h-full"
                 />
               </div>
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex flex-wrap justify-center items-center gap-3">
             <button
               onClick={() => setIsAnimating(!isAnimating)}
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-sm"
@@ -991,7 +993,7 @@ const App = () => {
             </div>
           </div>
 
-          <div className="text-sm text-gray-300 text-center">
+          <div className="text-sm text-gray-300 text-center max-w-2xl mx-auto">
             Watch how the planet's orbit creates the characteristic dips in starlight that astronomers use to detect exoplanets!
           </div>
         </div>
@@ -1065,15 +1067,15 @@ const App = () => {
     );
 
     return (
-      <div className="mt-16 bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-50 p-8 rounded-2xl border border-gray-600">
+      <div className="mt-16 bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-50 p-6 sm:p-8 rounded-2xl border border-gray-600">
         <h3 className="text-3xl font-bold mb-6 text-center text-purple-300">The Transit Method</h3>
 
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8">
-          <div className="bg-black bg-opacity-40 rounded-lg p-1 flex space-x-1">
+          <div className="bg-black bg-opacity-40 rounded-lg p-1 flex flex-wrap justify-center gap-1">
             <button
               onClick={() => setActiveTab('explanation')}
-              className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
+              className={`px-3 py-2 text-sm sm:px-4 sm:py-2 rounded-md transition-colors flex items-center gap-2 ${
                 activeTab === 'explanation'
                   ? 'bg-purple-600 text-white'
                   : 'text-gray-300 hover:text-white'
@@ -1084,7 +1086,7 @@ const App = () => {
             </button>
             <button
               onClick={() => setActiveTab('simulation')}
-              className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
+              className={`px-3 py-2 text-sm sm:px-4 sm:py-2 rounded-md transition-colors flex items-center gap-2 ${
                 activeTab === 'simulation'
                   ? 'bg-purple-600 text-white'
                   : 'text-gray-300 hover:text-white'
@@ -1095,7 +1097,7 @@ const App = () => {
             </button>
             <button
               onClick={() => setActiveTab('lightcurve')}
-              className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
+              className={`px-3 py-2 text-sm sm:px-4 sm:py-2 rounded-md transition-colors flex items-center gap-2 ${
                 activeTab === 'lightcurve'
                   ? 'bg-purple-600 text-white'
                   : 'text-gray-300 hover:text-white'
@@ -1108,7 +1110,7 @@ const App = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="min-h-[400px]">
+        <div className="min-h-[350px]">
           {activeTab === 'explanation' && <SimpleExplanation />}
           {activeTab === 'simulation' && <TransitAnimation />}
           {activeTab === 'lightcurve' && <LightCurveTab />}
@@ -1120,10 +1122,10 @@ const App = () => {
   const HeroSection = () => (
     <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4">
       <div className="z-10 max-w-4xl mx-auto">
-        <h1 className="text-6xl md:text-8xl font-bold mb-8 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-pulse">
+        <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold mb-8 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-pulse">
           Astro Hunters
         </h1>
-        <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+        <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
           Join the quest to discover new worlds. Learn to detect exoplanets, explore real NASA data, and become a citizen scientist.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -1136,17 +1138,17 @@ const App = () => {
   );
 
   const SolarSystemSection = () => (
-    <section className="relative min-h-screen py-20 px-4">
+    <section className="relative min-h-screen py-20 px-4 overflow-hidden">
       <div className="z-10 relative max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Our Solar System</h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">Explore our cosmic neighborhood. Click any planet to see detailed facts and discover unique, real-time phenomena powered by NASA APIs.</p>
+          <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-8">Explore our cosmic neighborhood. Click any planet to see detailed facts and discover unique, real-time phenomena powered by NASA APIs.</p>
           <button onClick={() => setSolarSystemAnimation(!solarSystemAnimation)} className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 rounded-full flex items-center gap-2 mx-auto transition-colors">
             {solarSystemAnimation ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             {solarSystemAnimation ? 'Pause Animation' : 'Start Animation'}
-          </button> 
+          </button>
         </div>
-        <div className="relative flex items-center justify-center mb-16 h-96">
+        <div className="relative flex items-center justify-center mb-16 h-96 sm:h-[500px] scale-[0.4] sm:scale-75 md:scale-100">
           <div className="absolute z-20 rounded-full shadow-2xl cursor-pointer hover:scale-110 transition-transform" style={{ width: '60px', height: '60px', background: 'radial-gradient(circle, #ffd700, #ff8c00)', boxShadow: '0 0 30px #ff8c00' }}></div>
           {planetData.map((planet) => (
             <div key={planet.name}>
@@ -1217,7 +1219,7 @@ const App = () => {
             <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
               Types of Exoplanets
             </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto">
               Scientists have discovered thousands of exoplanets, each with unique characteristics. Here are the main categories we've identified.
             </p>
           </div>
@@ -1226,7 +1228,7 @@ const App = () => {
             {exoplanetTypes.map((type, index) => (
               <div
                 key={type.name}
-                className={`p-8 rounded-2xl border border-gray-600 cursor-pointer transition-all duration-500 hover:scale-105 ${
+                className={`p-6 sm:p-8 rounded-2xl border border-gray-600 cursor-pointer transition-all duration-500 hover:scale-105 ${
                   currentExoplanetType === index ? 'bg-opacity-80 scale-105' : 'bg-opacity-40'
                 }`}
                 style={{
@@ -1256,24 +1258,24 @@ const App = () => {
               </div>
             ))}
           </div>
-          <div className="bg-black bg-opacity-60 backdrop-blur-md p-8 rounded-2xl border border-gray-600">
-            <h3 className="text-3xl font-bold mb-6 text-center text-green-400">Size Comparison</h3>
-            <div className="flex items-end justify-center gap-8 mb-6 h-32">
+          <div className="bg-black bg-opacity-60 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-gray-600">
+            <h3 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-green-400">Size Comparison</h3>
+            <div className="flex items-end justify-center gap-4 sm:gap-8 mb-6 h-32">
               <div className="text-center">
-                <div className="w-6 h-6 bg-blue-500 rounded-full mb-2 mx-auto"></div>
-                <span className="text-sm text-gray-400">Earth</span>
+                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full mb-2 mx-auto"></div>
+                <span className="text-xs sm:text-sm text-gray-400">Earth</span>
               </div>
               <div className="text-center">
-                <div className="w-10 h-10 bg-purple-500 rounded-full mb-2 mx-auto"></div>
-                <span className="text-sm text-gray-400">Super-Earth</span>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500 rounded-full mb-2 mx-auto"></div>
+                <span className="text-xs sm:text-sm text-gray-400">Super-Earth</span>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 bg-indigo-500 rounded-full mb-2 mx-auto"></div>
-                <span className="text-sm text-gray-400">Mini-Neptune</span>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-500 rounded-full mb-2 mx-auto"></div>
+                <span className="text-xs sm:text-sm text-gray-400">Mini-Neptune</span>
               </div>
               <div className="text-center">
-                <div className="w-24 h-24 bg-red-500 rounded-full mb-2 mx-auto"></div>
-                <span className="text-sm text-gray-400">Hot Jupiter</span>
+                <div className="w-16 h-16 sm:w-24 sm:h-24 bg-red-500 rounded-full mb-2 mx-auto"></div>
+                <span className="text-xs sm:text-sm text-gray-400">Hot Jupiter</span>
               </div>
             </div>
             <p className="text-center text-gray-300">
@@ -1519,13 +1521,13 @@ const App = () => {
                     <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-red-400 to-pink-500 bg-clip-text text-transparent">
                         Exoplanet Detection Simulator
                     </h2>
-                    <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+                    <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-8">
                         Analyze starlight to discover new worlds.
                     </p>
                 </div>
                 <div className="grid lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-8 bg-black bg-opacity-60 backdrop-blur-md p-4 rounded-2xl border border-gray-600 relative">
-                        <div className="flex-grow h-96">
+                        <div className="flex-grow h-80 sm:h-96">
                             <canvas
                                 ref={canvasRef}
                                 className="w-full h-full bg-gray-900 rounded-lg cursor-crosshair"
@@ -1630,20 +1632,20 @@ const App = () => {
         main: (
             <div>
                 <h2 className="text-3xl font-bold mb-6 text-white border-b border-gray-600 pb-3">Astro Hunters Field Guide</h2>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="guide-item col-span-2 md:col-span-1 p-4 rounded-lg flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => setFieldGuideSection('planet-transits')}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="guide-item col-span-1 p-4 rounded-lg flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => setFieldGuideSection('planet-transits')}>
                         <img src="https://thumbnails.zooniverse.org/100x100/panoptes-uploads.zooniverse.org/field_guide_attached_image/af5cf99c-57e3-4a26-a1f3-e441269a6412.png" alt="Planet Transit Icon" className="rounded-md w-16 h-16" />
                         <div><h3 className="font-bold text-lg text-white">Planet Transits</h3><p className="text-sm text-gray-300">The U-shaped dips you're looking for.</p></div>
                     </div>
-                    <div className="guide-item col-span-2 md:col-span-1 p-4 rounded-lg flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => setFieldGuideSection('eclipsing-binaries')}>
+                    <div className="guide-item col-span-1 p-4 rounded-lg flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => setFieldGuideSection('eclipsing-binaries')}>
                         <img src="https://thumbnails.zooniverse.org/100x100/panoptes-uploads.zooniverse.org/field_guide_attached_image/2043ca16-9dd4-4cdd-af32-94971b692383.jpeg" alt="Eclipsing Binary Icon" className="rounded-md w-16 h-16" />
                         <div><h3 className="font-bold text-lg text-white">Eclipsing Binaries</h3><p className="text-sm text-gray-300">V-shaped dips from orbiting stars.</p></div>
                     </div>
-                    <div className="guide-item col-span-2 md:col-span-1 p-4 rounded-lg flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => setFieldGuideSection('stellar-variability')}>
+                    <div className="guide-item col-span-1 p-4 rounded-lg flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => setFieldGuideSection('stellar-variability')}>
                         <img src="https://thumbnails.zooniverse.org/100x100/panoptes-uploads.zooniverse.org/field_guide_attached_image/eb5408b3-7555-4050-896a-300fc3680e76.png" alt="Stellar Variability Icon" className="rounded-md w-16 h-16" />
                         <div><h3 className="font-bold text-lg text-white">Stellar Variability</h3><p className="text-sm text-gray-300">Natural brightness changes in stars.</p></div>
                     </div>
-                    <div className="guide-item col-span-2 md:col-span-1 p-4 rounded-lg flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => setFieldGuideSection('systematic-effects')}>
+                    <div className="guide-item col-span-1 p-4 rounded-lg flex items-center space-x-4 bg-gray-700 hover:bg-gray-600 transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => setFieldGuideSection('systematic-effects')}>
                         <img src="https://thumbnails.zooniverse.org/100x100/panoptes-uploads.zooniverse.org/field_guide_attached_image/704ec094-56cb-477e-b650-b22fc0e34d56.jpeg" alt="Systematic Effects Icon" className="rounded-md w-16 h-16" />
                         <div><h3 className="font-bold text-lg text-white">Systematic Effects</h3><p className="text-sm text-gray-300">Instrument glitches and data artifacts.</p></div>
                     </div>
@@ -1707,7 +1709,7 @@ const App = () => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="relative p-8 rounded-2xl max-w-4xl w-full max-h-[90vh] border border-white border-opacity-20 text-left bg-gray-900 bg-opacity-95">
+            <div className="relative p-6 sm:p-8 rounded-2xl max-w-4xl w-full max-h-[90vh] border border-white border-opacity-20 text-left bg-gray-900 bg-opacity-95">
                 <button
                     onClick={() => {
                         setShowFieldGuide(false);
@@ -1774,33 +1776,33 @@ const App = () => {
             <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
               Join the Discovery
             </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+            <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-8">
               You don't need a PhD to contribute to space science. Join millions of citizen scientists making real discoveries from their computers.
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-            <div className="text-center p-6 bg-black bg-opacity-40 rounded-xl border border-gray-600">
-              <div className="text-3xl font-bold text-blue-400 mb-2">5,000+</div>
-              <div className="text-gray-300">Exoplanets Discovered</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-16">
+            <div className="text-center p-4 sm:p-6 bg-black bg-opacity-40 rounded-xl border border-gray-600">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-2">5,000+</div>
+              <div className="text-gray-300 text-sm">Exoplanets Discovered</div>
             </div>
-            <div className="text-center p-6 bg-black bg-opacity-40 rounded-xl border border-gray-600">
-              <div className="text-3xl font-bold text-green-400 mb-2">2M+</div>
-              <div className="text-gray-300">Citizen Scientists</div>
+            <div className="text-center p-4 sm:p-6 bg-black bg-opacity-40 rounded-xl border border-gray-600">
+              <div className="text-2xl sm:text-3xl font-bold text-green-400 mb-2">2M+</div>
+              <div className="text-gray-300 text-sm">Citizen Scientists</div>
             </div>
-            <div className="text-center p-6 bg-black bg-opacity-40 rounded-xl border border-gray-600">
-              <div className="text-3xl font-bold text-purple-400 mb-2">100+</div>
-              <div className="text-gray-300">Research Papers</div>
+            <div className="text-center p-4 sm:p-6 bg-black bg-opacity-40 rounded-xl border border-gray-600">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-400 mb-2">100+</div>
+              <div className="text-gray-300 text-sm">Research Papers</div>
             </div>
-            <div className="text-center p-6 bg-black bg-opacity-40 rounded-xl border border-gray-600">
-              <div className="text-3xl font-bold text-yellow-400 mb-2">24/7</div>
-              <div className="text-gray-300">Data Collection</div>
+            <div className="text-center p-4 sm:p-6 bg-black bg-opacity-40 rounded-xl border border-gray-600">
+              <div className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-2">24/7</div>
+              <div className="text-gray-300 text-sm">Data Collection</div>
             </div>
           </div>
           <div className="grid md:grid-cols-2 gap-8 mb-16">
             {initiatives.map((initiative) => (
               <div
                 key={initiative.title}
-                className="group p-8 bg-black bg-opacity-40 backdrop-blur-md rounded-2xl border border-gray-600 hover:border-gray-400 transition-all duration-300 hover:scale-105"
+                className="group p-6 sm:p-8 bg-black bg-opacity-40 backdrop-blur-md rounded-2xl border border-gray-600 hover:border-gray-400 transition-all duration-300 hover:scale-105"
               >
                 <div className={`inline-flex p-4 rounded-xl bg-gradient-to-r ${initiative.color} mb-6`}>
                   {initiative.icon}
@@ -1869,7 +1871,7 @@ const App = () => {
       <div className="z-10 relative max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">NASA Data Explorer</h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">Interact with live and historical data directly from NASA's public APIs. See today's space picture or check for nearby asteroids.</p>
+          <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto">Interact with live and historical data directly from NASA's public APIs. See today's space picture or check for nearby asteroids.</p>
         </div>
         <TimeMachine />
         <NearEarthObjects />
@@ -1888,7 +1890,7 @@ const App = () => {
             <p className="text-gray-300 mb-6 max-w-md">
               Empowering the next generation of space explorers through interactive education and real scientific contribution.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <button onClick={() => setActiveSection('education')} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
                 Start Learning
               </button>
@@ -1927,19 +1929,56 @@ const App = () => {
     </footer>
   );
 
-  const Navigation = () => (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-50 backdrop-blur-md border-b border-gray-800">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-        <button onClick={() => setActiveSection('hero')} className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Astro Hunters</button>
-        <div className="hidden md:flex gap-6">
-          <button onClick={() => setActiveSection('education')} className={`hover:text-white transition-colors ${activeSection === 'education' ? 'text-white' : 'text-gray-400'}`}>Learn</button>
-          <button onClick={() => setActiveSection('simulation')} className={`hover:text-white transition-colors ${activeSection === 'simulation' ? 'text-white' : 'text-gray-400'}`}>Discover</button>
-          <button onClick={() => setActiveSection('nasa-explorer')} className={`hover:text-white transition-colors ${activeSection === 'nasa-explorer' ? 'text-white' : 'text-gray-400'}`}>NASA Explorer</button>
-          <button onClick={() => setActiveSection('citizen-science')} className={`hover:text-white transition-colors ${activeSection === 'citizen-science' ? 'text-white' : 'text-gray-400'}`}>Contribute</button>
+  const Navigation = () => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    
+    const handleLinkClick = (section: string) => {
+        setActiveSection(section);
+        setIsMenuOpen(false);
+    }
+    
+    const navLinks = (
+      <>
+        <button onClick={() => handleLinkClick('education')} className={`w-full text-left p-4 md:w-auto md:p-0 md:text-center hover:text-white transition-colors ${activeSection === 'education' ? 'text-white' : 'text-gray-400'}`}>Learn</button>
+        <button onClick={() => handleLinkClick('simulation')} className={`w-full text-left p-4 md:w-auto md:p-0 md:text-center hover:text-white transition-colors ${activeSection === 'simulation' ? 'text-white' : 'text-gray-400'}`}>Exoplanet Simulator</button>
+        <a href="https://huggingface.co/spaces/FatimahEmadEldin/Astro-Hunters" target="_blank" rel="noopener noreferrer" className="w-full text-left p-4 md:w-auto md:p-0 md:text-center text-gray-400 hover:text-white transition-colors">
+          Discover
+        </a>
+        <button onClick={() => handleLinkClick('nasa-explorer')} className={`w-full text-left p-4 md:w-auto md:p-0 md:text-center hover:text-white transition-colors ${activeSection === 'nasa-explorer' ? 'text-white' : 'text-gray-400'}`}>NASA Explorer</button>
+        <button onClick={() => handleLinkClick('citizen-science')} className={`w-full text-left p-4 md:w-auto md:p-0 md:text-center hover:text-white transition-colors ${activeSection === 'citizen-science' ? 'text-white' : 'text-gray-400'}`}>Contribute</button>
+      </>
+    );
+
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-50 backdrop-blur-md border-b border-gray-800">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <button onClick={() => handleLinkClick('hero')} className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Astro Hunters</button>
+          
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-6">
+            {navLinks}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
-  );
+
+        {/* Mobile Menu Panel */}
+        {isMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 bg-black bg-opacity-90 backdrop-blur-md">
+            <div className="flex flex-col items-start p-4 space-y-2">
+              {navLinks}
+            </div>
+          </div>
+        )}
+      </nav>
+    );
+  };
+
 
   return (
     <div className="relative min-h-screen text-white overflow-x-hidden bg-black">
@@ -1972,18 +2011,18 @@ const App = () => {
       {showModal === 'mars-rover-photos' && <Modal onClose={() => setShowModal(null)}><MarsRoverPhotos /></Modal>}
       {showModal === 'planet' && selectedPlanet && (
         <Modal onClose={() => setShowModal(null)}>
-          <h2 className="text-4xl font-bold mb-4 text-center">{selectedPlanet.name}</h2>
-          <p className="text-lg text-gray-300 mb-6 text-center max-w-2xl mx-auto">{selectedPlanet.description}</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-left mb-6">{Object.entries(selectedPlanet.facts).map(([key, value]) => ( <div key={key} className="bg-white/10 p-3 rounded-lg"><h4 className="font-semibold text-purple-300">{key}</h4><p>{String(value)}</p></div> ))}</div>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-center">{selectedPlanet.name}</h2>
+          <p className="text-base sm:text-lg text-gray-300 mb-6 text-center max-w-2xl mx-auto">{selectedPlanet.description}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-left mb-6">{Object.entries(selectedPlanet.facts).map(([key, value]) => ( <div key={key} className="bg-white/10 p-3 rounded-lg"><h4 className="font-semibold text-purple-300">{key}</h4><p>{String(value)}</p></div> ))}</div>
           {selectedPlanet.phenomena.length > 0 && <h3 className="text-2xl font-bold mb-4 text-blue-300 text-center">Explore Phenomena</h3>}
           <div className="space-y-4">
             {selectedPlanet.phenomena.map((phenomenon) => (
-              <div key={phenomenon.id} className="bg-gradient-to-r from-purple-900 to-blue-900 p-4 rounded-xl border border-white/20 cursor-pointer hover:scale-105 transition-transform" onClick={() => setShowModal(phenomenon.id)}>
+              <div key={phenomenon.id} className="bg-gradient-to-r from-purple-900 to-blue-900 p-4 rounded-xl border border-white/20 cursor-pointer hover:scale-105 transition-transform" onClick={() => { fetchMarsRoverPhotos(); setShowModal(phenomenon.id); }}>
                 <div className="flex items-center gap-4">
                   <div className="text-3xl">{phenomenon.icon}</div>
                   <div>
-                    <h4 className="text-xl font-bold text-white">{phenomenon.title}</h4>
-                    <p className="text-gray-300">{phenomenon.description}</p>
+                    <h4 className="text-lg sm:text-xl font-bold text-white">{phenomenon.title}</h4>
+                    <p className="text-gray-300 text-sm sm:text-base">{phenomenon.description}</p>
                   </div>
                 </div>
               </div>
