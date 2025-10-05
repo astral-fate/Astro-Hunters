@@ -122,7 +122,7 @@ const App = () => {
   // --- CORRECTED API KEY ---
   const NASA_API_KEY = '8cvVfO7F62medHZ3Q1CIQqigHbGGlXH3G2sPfNX6';
 
-  // --- DATA ARRAYS (FROM SPACE.TSX) ---
+  // --- DATA ARrays (FROM SPACE.TSX) ---
   const planetData: Planet[] = [
     { name: 'Mercury', distance: 80, size: 8, color: '#8c7853', period: 88, description: "The smallest planet in our solar system and nearest to the Sun.", facts: { "Diameter": "4,879 km", "Day Length": "59 Earth days", "Orbital Period": "88 Earth days" }, phenomena: [] },
     { name: 'Venus', distance: 110, size: 12, color: '#ffc649', period: 225, description: "Venus spins slowly in the opposite direction from most planets.", facts: { "Diameter": "12,104 km", "Day Length": "243 Earth days", "Surface Temp": "465°C" }, phenomena: [] },
@@ -431,23 +431,23 @@ const App = () => {
     return { phase: "Waning Crescent", eclipse: "" };
   };
 
-  // Create stable callback functions
+  // Create stable callback functions with dependencies to fix animation
   const handleAnimationToggle = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsAnimating(prev => !prev);
-  }, []);
+  }, [setIsAnimating]);
 
   const handleReset = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setMoonPhase(180);
     setIsAnimating(false);
-  }, []);
+  }, [setMoonPhase, setIsAnimating]);
 
   const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setMoonPhase(parseInt(e.target.value));
-  }, []);
+  }, [setMoonPhase]);
 
   const phaseInfo = getPhaseInfo(moonPhase);
   const shadowX = -100 + ((moonPhase - 180 + 360) % 360 / 180) * 200;
@@ -1070,8 +1070,8 @@ const App = () => {
       <div className="mt-16 bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-50 p-6 sm:p-8 rounded-2xl border border-gray-600">
         <h3 className="text-3xl font-bold mb-6 text-center text-purple-300">The Transit Method</h3>
 
-        {/* Tab Navigation */}
-        <div className="flex justify-center mb-8">
+        {/* Tab Navigation - Added z-10 and relative positioning to fix click issue */}
+        <div className="relative z-10 flex justify-center mb-8">
           <div className="bg-black bg-opacity-40 rounded-lg p-1 flex flex-wrap justify-center gap-1">
             <button
               onClick={() => setActiveTab('explanation')}
@@ -1936,18 +1936,6 @@ const App = () => {
         setActiveSection(section);
         setIsMenuOpen(false);
     }
-    
-    const navLinks = (
-      <>
-        <button onClick={() => handleLinkClick('education')} className={`w-full text-left p-4 md:w-auto md:p-0 md:text-center hover:text-white transition-colors ${activeSection === 'education' ? 'text-white' : 'text-gray-400'}`}>Learn</button>
-        <button onClick={() => handleLinkClick('simulation')} className={`w-full text-left p-4 md:w-auto md:p-0 md:text-center hover:text-white transition-colors ${activeSection === 'simulation' ? 'text-white' : 'text-gray-400'}`}>Exoplanet Simulator</button>
-        <a href="https://huggingface.co/spaces/FatimahEmadEldin/Astro-Hunters" target="_blank" rel="noopener noreferrer" className="w-full text-left p-4 md:w-auto md:p-0 md:text-center text-gray-400 hover:text-white transition-colors">
-          Discover
-        </a>
-        <button onClick={() => handleLinkClick('nasa-explorer')} className={`w-full text-left p-4 md:w-auto md:p-0 md:text-center hover:text-white transition-colors ${activeSection === 'nasa-explorer' ? 'text-white' : 'text-gray-400'}`}>NASA Explorer</button>
-        <button onClick={() => handleLinkClick('citizen-science')} className={`w-full text-left p-4 md:w-auto md:p-0 md:text-center hover:text-white transition-colors ${activeSection === 'citizen-science' ? 'text-white' : 'text-gray-400'}`}>Contribute</button>
-      </>
-    );
 
     return (
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-50 backdrop-blur-md border-b border-gray-800">
@@ -1956,22 +1944,30 @@ const App = () => {
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6">
-            {navLinks}
+            <button onClick={() => handleLinkClick('education')} className={`hover:text-white transition-colors ${activeSection === 'education' ? 'text-white' : 'text-gray-400'}`}>Learn</button>
+            <button onClick={() => handleLinkClick('simulation')} className={`hover:text-white transition-colors ${activeSection === 'simulation' ? 'text-white' : 'text-gray-400'}`}>Exoplanet Simulator</button>
+            <a href="https://huggingface.co/spaces/FatimahEmadEldin/Astro-Hunters" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Discover</a>
+            <button onClick={() => handleLinkClick('nasa-explorer')} className={`hover:text-white transition-colors ${activeSection === 'nasa-explorer' ? 'text-white' : 'text-gray-400'}`}>NASA Explorer</button>
+            <button onClick={() => handleLinkClick('citizen-science')} className={`hover:text-white transition-colors ${activeSection === 'citizen-science' ? 'text-white' : 'text-gray-400'}`}>Contribute</button>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
               {isMenuOpen ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu Panel */}
+        {/* Mobile Menu Panel - Fixed for better tap targets */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-black bg-opacity-90 backdrop-blur-md">
-            <div className="flex flex-col items-start p-4 space-y-2">
-              {navLinks}
+          <div className="md:hidden absolute top-full left-0 right-0 bg-black bg-opacity-90 backdrop-blur-md border-t border-gray-800">
+            <div className="flex flex-col">
+              <button onClick={() => handleLinkClick('education')} className={`block w-full text-left p-4 transition-colors ${activeSection === 'education' ? 'text-white bg-purple-600/20' : 'text-gray-300 hover:bg-gray-700'}`}>Learn</button>
+              <button onClick={() => handleLinkClick('simulation')} className={`block w-full text-left p-4 transition-colors ${activeSection === 'simulation' ? 'text-white bg-purple-600/20' : 'text-gray-300 hover:bg-gray-700'}`}>Exoplanet Simulator</button>
+              <a href="https://huggingface.co/spaces/FatimahEmadEldin/Astro-Hunters" target="_blank" rel="noopener noreferrer" className="block w-full text-left p-4 text-gray-300 hover:bg-gray-700 transition-colors">Discover</a>
+              <button onClick={() => handleLinkClick('nasa-explorer')} className={`block w-full text-left p-4 transition-colors ${activeSection === 'nasa-explorer' ? 'text-white bg-purple-600/20' : 'text-gray-300 hover:bg-gray-700'}`}>NASA Explorer</button>
+              <button onClick={() => handleLinkClick('citizen-science')} className={`block w-full text-left p-4 transition-colors ${activeSection === 'citizen-science' ? 'text-white bg-purple-600/20' : 'text-gray-300 hover:bg-gray-700'}`}>Contribute</button>
             </div>
           </div>
         )}
@@ -2017,7 +2013,7 @@ const App = () => {
           {selectedPlanet.phenomena.length > 0 && <h3 className="text-2xl font-bold mb-4 text-blue-300 text-center">Explore Phenomena</h3>}
           <div className="space-y-4">
             {selectedPlanet.phenomena.map((phenomenon) => (
-              <div key={phenomenon.id} className="bg-gradient-to-r from-purple-900 to-blue-900 p-4 rounded-xl border border-white/20 cursor-pointer hover:scale-105 transition-transform" onClick={() => { fetchMarsRoverPhotos(); setShowModal(phenomenon.id); }}>
+              <div key={phenomenon.id} className="bg-gradient-to-r from-purple-900 to-blue-900 p-4 rounded-xl border border-white/20 cursor-pointer hover:scale-105 transition-transform" onClick={() => { if(phenomenon.id === 'mars-rover-photos') fetchMarsRoverPhotos(); setShowModal(phenomenon.id); }}>
                 <div className="flex items-center gap-4">
                   <div className="text-3xl">{phenomenon.icon}</div>
                   <div>
