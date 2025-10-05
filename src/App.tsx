@@ -38,7 +38,7 @@ type ApodData = {
   media_type: string;
   service_version: string;
   title: string;
-  url: string;
+  url:string;
 };
 
 type MarsPhoto = {
@@ -51,6 +51,7 @@ type MarsPhoto = {
     id: number;
     name: string;
     landing_date: string;
+
     launch_date: string;
     status: string;
   };
@@ -122,7 +123,7 @@ const App = () => {
   // --- CORRECTED API KEY ---
   const NASA_API_KEY = '8cvVfO7F62medHZ3Q1CIQqigHbGGlXH3G2sPfNX6';
 
-  // --- DATA ARrays (FROM SPACE.TSX) ---
+  // --- DATA ARRAYS (FROM SPACE.TSX) ---
   const planetData: Planet[] = [
     { name: 'Mercury', distance: 80, size: 8, color: '#8c7853', period: 88, description: "The smallest planet in our solar system and nearest to the Sun.", facts: { "Diameter": "4,879 km", "Day Length": "59 Earth days", "Orbital Period": "88 Earth days" }, phenomena: [] },
     { name: 'Venus', distance: 110, size: 12, color: '#ffc649', period: 225, description: "Venus spins slowly in the opposite direction from most planets.", facts: { "Diameter": "12,104 km", "Day Length": "243 Earth days", "Surface Temp": "465°C" }, phenomena: [] },
@@ -419,95 +420,77 @@ const App = () => {
   );
 
   const MoonPhaseSimulator = () => {
-  const getPhaseInfo = (angle: number) => {
-    const normalizedAngle = (angle - 180 + 360) % 360;
-    if (normalizedAngle >= 355 || normalizedAngle < 5) return { phase: "New Moon", eclipse: "Solar Eclipse Possible!" };
-    if (normalizedAngle < 85) return { phase: "Waxing Crescent", eclipse: "" };
-    if (normalizedAngle < 95) return { phase: "First Quarter", eclipse: "" };
-    if (normalizedAngle < 175) return { phase: "Waxing Gibbous", eclipse: "" };
-    if (normalizedAngle < 185) return { phase: "Full Moon", eclipse: "Lunar Eclipse Possible!" };
-    if (normalizedAngle < 265) return { phase: "Waning Gibbous", eclipse: "" };
-    if (normalizedAngle < 275) return { phase: "Third Quarter", eclipse: "" };
-    return { phase: "Waning Crescent", eclipse: "" };
+    const getPhaseInfo = (angle: number) => {
+      const normalizedAngle = (angle - 180 + 360) % 360;
+      if (normalizedAngle >= 355 || normalizedAngle < 5) return { phase: "New Moon", eclipse: "Solar Eclipse Possible!" };
+      if (normalizedAngle < 85) return { phase: "Waxing Crescent", eclipse: "" };
+      if (normalizedAngle < 95) return { phase: "First Quarter", eclipse: "" };
+      if (normalizedAngle < 175) return { phase: "Waxing Gibbous", eclipse: "" };
+      if (normalizedAngle < 185) return { phase: "Full Moon", eclipse: "Lunar Eclipse Possible!" };
+      if (normalizedAngle < 265) return { phase: "Waning Gibbous", eclipse: "" };
+      if (normalizedAngle < 275) return { phase: "Third Quarter", eclipse: "" };
+      return { phase: "Waning Crescent", eclipse: "" };
+    };
+
+    const phaseInfo = getPhaseInfo(moonPhase);
+    const shadowX = -100 + ((moonPhase - 180 + 360) % 360 / 180) * 200;
+
+    return (
+      <div className="space-y-6 text-center">
+        <h3 className="text-2xl font-bold mb-4 text-indigo-300">Moon Phases & Eclipses</h3>
+        <p className="text-gray-400 mb-4 max-w-md mx-auto">Drag the slider to orbit the Moon around Earth and see its phases from our perspective.</p>
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 mb-6">
+          <div className="relative">
+            <p className="absolute text-yellow-300 font-semibold -left-16 top-1/2 -translate-y-1/2 hidden sm:block">Sunlight</p>
+            <div className="relative border-2 border-dashed border-gray-500 rounded-full w-64 h-64 sm:w-72 sm:h-72">
+              <div className="absolute bg-blue-500 rounded-full w-14 h-14 sm:w-16 sm:h-16 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+              <div className="absolute w-4 h-4 sm:w-5 sm:h-5 bg-gray-300 rounded-full"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  transform: `translate(-50%, -50%) rotate(${moonPhase}deg) translateX(120px) sm:translateX(136px)`
+                }} />
+            </div>
+          </div>
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-2">View from Earth</h3>
+            <div className="relative bg-gray-300 rounded-full border-2 border-white mx-auto overflow-hidden w-24 h-24">
+              <div className="absolute top-0 bg-gray-800 rounded-full transition-transform duration-300 w-24 h-24"
+                style={{ transform: `translateX(${shadowX}px)` }} />
+            </div>
+            <p className="mt-2 text-xl font-bold">{phaseInfo.phase}</p>
+            {phaseInfo.eclipse && <p className="mt-2 text-lg font-semibold text-yellow-400">{phaseInfo.eclipse}</p>}
+          </div>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="360"
+          value={moonPhase}
+          onChange={(e) => setMoonPhase(parseInt(e.target.value))}
+          className="w-full max-w-xs mx-auto"
+        />
+        <div className="flex justify-center gap-4 mt-4">
+          <button
+            onClick={() => setIsAnimating(prev => !prev)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-full transition-colors"
+            type="button"
+          >
+            {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {isAnimating ? 'Pause' : 'Play'}
+          </button>
+          <button
+            onClick={() => { setMoonPhase(180); setIsAnimating(false); }}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
+            type="button"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </button>
+        </div>
+      </div>
+    );
   };
-
-  // Create stable callback functions with dependencies to fix animation
-  const handleAnimationToggle = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsAnimating(prev => !prev);
-  }, [setIsAnimating]);
-
-  const handleReset = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setMoonPhase(180);
-    setIsAnimating(false);
-  }, [setMoonPhase, setIsAnimating]);
-
-  const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setMoonPhase(parseInt(e.target.value));
-  }, [setMoonPhase]);
-
-  const phaseInfo = getPhaseInfo(moonPhase);
-  const shadowX = -100 + ((moonPhase - 180 + 360) % 360 / 180) * 200;
-
-  return (
-    <div className="space-y-6 text-center">
-      <h3 className="text-2xl font-bold mb-4 text-indigo-300">Moon Phases & Eclipses</h3>
-      <p className="text-gray-400 mb-4 max-w-md mx-auto">Drag the slider to orbit the Moon around Earth and see its phases from our perspective.</p>
-      <div className="flex flex-col lg:flex-row items-center justify-center gap-8 mb-6">
-        <div className="relative">
-          <p className="absolute text-yellow-300 font-semibold -left-16 top-1/2 -translate-y-1/2 hidden sm:block">Sunlight</p>
-          <div className="relative border-2 border-dashed border-gray-500 rounded-full w-64 h-64 sm:w-72 sm:h-72">
-            <div className="absolute bg-blue-500 rounded-full w-14 h-14 sm:w-16 sm:h-16 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute w-4 h-4 sm:w-5 sm:h-5 bg-gray-300 rounded-full"
-              style={{
-                top: '50%',
-                left: '50%',
-                transform: `translate(-50%, -50%) rotate(${moonPhase}deg) translateX(120px) sm:translateX(136px)`
-              }} />
-          </div>
-        </div>
-        <div className="text-center">
-          <h3 className="text-lg font-semibold mb-2">View from Earth</h3>
-          <div className="relative bg-gray-300 rounded-full border-2 border-white mx-auto overflow-hidden w-24 h-24">
-            <div className="absolute top-0 bg-gray-800 rounded-full transition-transform duration-300 w-24 h-24"
-              style={{ transform: `translateX(${shadowX}px)` }} />
-          </div>
-          <p className="mt-2 text-xl font-bold">{phaseInfo.phase}</p>
-          {phaseInfo.eclipse && <p className="mt-2 text-lg font-semibold text-yellow-400">{phaseInfo.eclipse}</p>}
-        </div>
-      </div>
-      <input
-        type="range"
-        min="0"
-        max="360"
-        value={moonPhase}
-        onChange={handleSliderChange}
-        className="w-full max-w-xs mx-auto"
-      />
-      <div className="flex justify-center gap-4 mt-4">
-        <button
-          onClick={handleAnimationToggle}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-full transition-colors"
-          type="button"
-        >
-          {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          {isAnimating ? 'Pause' : 'Play'}
-        </button>
-        <button
-          onClick={handleReset}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
-          type="button"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Reset
-        </button>
-      </div>
-    </div>
-  );
-};
 
   const FeedbackModal = () => {
     const modalChartRef = useRef<HTMLCanvasElement>(null);
@@ -1070,7 +1053,7 @@ const App = () => {
       <div className="mt-16 bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-50 p-6 sm:p-8 rounded-2xl border border-gray-600">
         <h3 className="text-3xl font-bold mb-6 text-center text-purple-300">The Transit Method</h3>
 
-        {/* Tab Navigation - Added z-10 and relative positioning to fix click issue */}
+        {/* Tab Navigation */}
         <div className="relative z-10 flex justify-center mb-8">
           <div className="bg-black bg-opacity-40 rounded-lg p-1 flex flex-wrap justify-center gap-1">
             <button
@@ -1140,7 +1123,8 @@ const App = () => {
   const SolarSystemSection = () => (
     <section className="relative min-h-screen py-20 px-4 overflow-hidden">
       <div className="z-10 relative max-w-6xl mx-auto">
-        <div className="text-center mb-16">
+        {/* FIX: Added relative and z-10 to this container to ensure it's above the animation div */}
+        <div className="relative z-10 text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Our Solar System</h2>
           <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-8">Explore our cosmic neighborhood. Click any planet to see detailed facts and discover unique, real-time phenomena powered by NASA APIs.</p>
           <button onClick={() => setSolarSystemAnimation(!solarSystemAnimation)} className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 rounded-full flex items-center gap-2 mx-auto transition-colors">
@@ -1959,7 +1943,7 @@ const App = () => {
           </div>
         </div>
 
-        {/* Mobile Menu Panel - Fixed for better tap targets */}
+        {/* Mobile Menu Panel */}
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-black bg-opacity-90 backdrop-blur-md border-t border-gray-800">
             <div className="flex flex-col">
@@ -1977,7 +1961,46 @@ const App = () => {
 
 
   return (
+    // This top-level div sets the base dark theme for the entire application.
+    // NOTE: This app is designed for a dark theme. Forcing a light mode via browser settings may cause visibility issues.
     <div className="relative min-h-screen text-white overflow-x-hidden bg-black">
+      <style>{`
+        /* Custom styles for range inputs for better theme consistency */
+        input[type="range"] {
+          -webkit-appearance: none;
+          appearance: none;
+          background: transparent;
+          cursor: pointer;
+        }
+        /* Thumb */
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          margin-top: -5px; /* Tweak to center */
+          background-color: #a855f7; /* purple-500 */
+          height: 1.25rem;
+          width: 0.75rem;
+          border-radius: 0.25rem;
+        }
+        input[type="range"]::-moz-range-thumb {
+          background-color: #a855f7;
+          height: 1.25rem;
+          width: 0.75rem;
+          border-radius: 0.25rem;
+          border: none;
+        }
+        /* Track */
+        input[type="range"]::-webkit-slider-runnable-track {
+          background-color: #4b5563; /* gray-600 */
+          height: 0.25rem;
+          border-radius: 0.25rem;
+        }
+        input[type="range"]::-moz-range-track {
+          background-color: #4b5563;
+          height: 0.25rem;
+          border-radius: 0.25rem;
+        }
+      `}</style>
       <StarsBackground />
       <Navigation />
       <APIDebugPanel />
