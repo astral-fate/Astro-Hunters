@@ -1946,12 +1946,12 @@ const App = () => {
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800">
             <div className="flex flex-col">
-              {/* FIX: Removed all background classes and are now using text color to show active state */}
-              <button onClick={() => handleLinkClick('education')} className={`block w-full text-left p-4 transition-colors hover:text-white ${activeSection === 'education' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>Learn</button>
-              <button onClick={() => handleLinkClick('simulation')} className={`block w-full text-left p-4 transition-colors hover:text-white ${activeSection === 'simulation' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>Exoplanet Simulator</button>
+              {/* FIX: Explicitly set bg-transparent on buttons to prevent OS from adding a white background in light mode */}
+              <button onClick={() => handleLinkClick('education')} className={`block w-full text-left p-4 bg-transparent transition-colors hover:text-white ${activeSection === 'education' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>Learn</button>
+              <button onClick={() => handleLinkClick('simulation')} className={`block w-full text-left p-4 bg-transparent transition-colors hover:text-white ${activeSection === 'simulation' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>Exoplanet Simulator</button>
               <a href="https://huggingface.co/spaces/FatimahEmadEldin/Astro-Hunters" target="_blank" rel="noopener noreferrer" className="block w-full text-left p-4 text-gray-300 hover:text-white transition-colors">Discover</a>
-              <button onClick={() => handleLinkClick('nasa-explorer')} className={`block w-full text-left p-4 transition-colors hover:text-white ${activeSection === 'nasa-explorer' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>NASA Explorer</button>
-              <button onClick={() => handleLinkClick('citizen-science')} className={`block w-full text-left p-4 transition-colors hover:text-white ${activeSection === 'citizen-science' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>Contribute</button>
+              <button onClick={() => handleLinkClick('nasa-explorer')} className={`block w-full text-left p-4 bg-transparent transition-colors hover:text-white ${activeSection === 'nasa-explorer' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>NASA Explorer</button>
+              <button onClick={() => handleLinkClick('citizen-science')} className={`block w-full text-left p-4 bg-transparent transition-colors hover:text-white ${activeSection === 'citizen-science' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>Contribute</button>
             </div>
           </div>
         )}
@@ -2053,4 +2053,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default
