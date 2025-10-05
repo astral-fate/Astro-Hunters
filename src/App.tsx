@@ -319,7 +319,6 @@ const App = () => {
       return '🔴';
     };
     return (
-      // FIX: Increased z-index to ensure it appears over the mobile menu
       <div className="fixed top-20 right-2 bg-black bg-opacity-75 text-white p-3 rounded-lg text-xs z-[60] max-w-xs sm:max-w-sm">
         <h4 className="font-bold mb-2 text-sm">API Status</h4>
         <div className="space-y-1">
@@ -1114,7 +1113,6 @@ const App = () => {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button onClick={() => setActiveSection('simulation')} className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-lg font-semibold hover:scale-105 transition-transform flex items-center gap-2"><Telescope className="w-5 h-5" />Start Hunting</button>
-          {/* FIX: Explicit text color and subtle background to prevent light mode issues */}
           <button onClick={() => setActiveSection('education')} className="px-8 py-4 border-2 border-purple-500 rounded-full text-lg font-semibold text-purple-300 bg-white/10 hover:bg-purple-500/20 transition-colors flex items-center gap-2"><BookOpen className="w-5 h-5" />Learn First</button>
         </div>
       </div>
@@ -1125,7 +1123,6 @@ const App = () => {
   const SolarSystemSection = () => (
     <section className="relative min-h-screen py-20 px-4 overflow-hidden">
       <div className="z-10 relative max-w-6xl mx-auto">
-        {/* FIX: Added relative and z-10 to this container to ensure it's above the animation div */}
         <div className="relative z-10 text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Our Solar System</h2>
           <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-8">Explore our cosmic neighborhood. Click any planet to see detailed facts and discover unique, real-time phenomena powered by NASA APIs.</p>
@@ -1947,15 +1944,14 @@ const App = () => {
 
         {/* Mobile Menu Panel */}
         {isMenuOpen && (
-          // FIX: Changed background to be more solid and prevent light mode inversion.
           <div className="md:hidden absolute top-full left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800">
             <div className="flex flex-col">
-              {/* FIX: Added explicit bg color and ensured text is white for readability */}
-              <button onClick={() => handleLinkClick('education')} className={`block w-full text-left p-4 text-white transition-colors ${activeSection === 'education' ? 'bg-purple-600/30' : 'bg-transparent hover:bg-gray-800/50'}`}>Learn</button>
-              <button onClick={() => handleLinkClick('simulation')} className={`block w-full text-left p-4 text-white transition-colors ${activeSection === 'simulation' ? 'bg-purple-600/30' : 'bg-transparent hover:bg-gray-800/50'}`}>Exoplanet Simulator</button>
-              <a href="https://huggingface.co/spaces/FatimahEmadEldin/Astro-Hunters" target="_blank" rel="noopener noreferrer" className="block w-full text-left p-4 text-white bg-transparent hover:bg-gray-800/50 transition-colors">Discover</a>
-              <button onClick={() => handleLinkClick('nasa-explorer')} className={`block w-full text-left p-4 text-white transition-colors ${activeSection === 'nasa-explorer' ? 'bg-purple-600/30' : 'bg-transparent hover:bg-gray-800/50'}`}>NASA Explorer</button>
-              <button onClick={() => handleLinkClick('citizen-science')} className={`block w-full text-left p-4 text-white transition-colors ${activeSection === 'citizen-science' ? 'bg-purple-600/30' : 'bg-transparent hover:bg-gray-800/50'}`}>Contribute</button>
+              {/* FIX: Removed all background classes and are now using text color to show active state */}
+              <button onClick={() => handleLinkClick('education')} className={`block w-full text-left p-4 transition-colors hover:text-white ${activeSection === 'education' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>Learn</button>
+              <button onClick={() => handleLinkClick('simulation')} className={`block w-full text-left p-4 transition-colors hover:text-white ${activeSection === 'simulation' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>Exoplanet Simulator</button>
+              <a href="https://huggingface.co/spaces/FatimahEmadEldin/Astro-Hunters" target="_blank" rel="noopener noreferrer" className="block w-full text-left p-4 text-gray-300 hover:text-white transition-colors">Discover</a>
+              <button onClick={() => handleLinkClick('nasa-explorer')} className={`block w-full text-left p-4 transition-colors hover:text-white ${activeSection === 'nasa-explorer' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>NASA Explorer</button>
+              <button onClick={() => handleLinkClick('citizen-science')} className={`block w-full text-left p-4 transition-colors hover:text-white ${activeSection === 'citizen-science' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}>Contribute</button>
             </div>
           </div>
         )}
@@ -1965,7 +1961,6 @@ const App = () => {
 
 
   return (
-    // This top-level div sets the base dark theme for the entire application.
     <div className="relative min-h-screen text-white overflow-x-hidden bg-black">
       <style>{`
         /* Custom styles for range inputs for better theme consistency */
