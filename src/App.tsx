@@ -121,7 +121,7 @@ const App = () => {
   const [apiErrors, setApiErrors] = useState<StatusState>({});
 
   // --- CORRECTED API KEY ---
-  const NASA_API_KEY = '8cvVfO7F62medHZ3Q1CIQqigHbGGlXH3G2sPfNX6';
+  const NASA_API_KEY = import.meta.env.VITE_NASA_API_KEY || 'DEMO_KEY';
 
   // --- DATA ARRAYS (FROM SPACE.TSX) ---
   const planetData: Planet[] = [
